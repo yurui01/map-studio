@@ -41,4 +41,5 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
-        files: ${{ github.workspace }}/release/**/*.{exe,dmg}
+        with:
+          files: ${{ github.workspace }}/release/**/*.{exe,dmg}

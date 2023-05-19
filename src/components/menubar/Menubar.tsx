@@ -133,12 +133,14 @@ interface MenubarProps {
   onOpenWelcome: () => void
   onOpenSetting: () => void
   onOpenAbout: () => void
+  onOpenLoopClose: () => void
 }
 
 export default function Menubar({
   onOpenWelcome,
   onOpenSetting,
-  onOpenAbout
+  onOpenAbout,
+  onOpenLoopClose
 }: MenubarProps) {
   const { classes } = MenubarStyles()
 
@@ -260,7 +262,7 @@ export default function Menubar({
             </RadixMenubar.Trigger>
             <RadixMenubar.Portal>
               <RadixMenubar.Content className={classes.content}>
-                <RadixMenubar.Item className={classes.item}>
+                <RadixMenubar.Item className={classes.item} onClick={onOpenLoopClose}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
                       <Iconify icon={IconRecycle} width={16} />

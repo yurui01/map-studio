@@ -1,5 +1,5 @@
 import { Box, Container } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { useDisclosure, useToggle } from '@mantine/hooks'
 import { Allotment } from 'allotment'
 
 // components
@@ -24,6 +24,8 @@ function App() {
   const [openedSetting, settingHandler] = useDisclosure(false)
   const [openedAbout, aboutHandler] = useDisclosure(false)
 
+  const [openedLoopClosePanel, toggleLoopClosePanel] = useToggle([false, true])
+
   return (
     <>
       <Box w="100vw" h="100vh" display="flex" sx={{ flexDirection: 'column' }}>
@@ -31,16 +33,17 @@ function App() {
           onOpenWelcome={welcomeHandler.toggle}
           onOpenSetting={settingHandler.toggle}
           onOpenAbout={aboutHandler.toggle}
+          onOpenLoopClose={toggleLoopClosePanel}
         />
 
         <Allotment defaultSizes={[35, 45, 20]}>
           <Allotment.Pane>
             <PanelView />
           </Allotment.Pane>
-          <Allotment.Pane>
+          <Allotment.Pane visible={openedLoopClosePanel}>
             <PanelLoopClose />
           </Allotment.Pane>
-          <Allotment.Pane>
+          <Allotment.Pane maxSize={350} minSize={350}>
             <Allotment vertical>
               <Allotment.Pane>
                 <PanelDataTree />
