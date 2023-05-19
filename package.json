@@ -1,6 +1,6 @@
 {
   "name": "map-studio",
-  "version": "0.1.9-beta.5",
+  "version": "0.1.9-beta.6",
   "main": "dist-electron/main/index.js",
   "author": "yurui",
   "private": true,
