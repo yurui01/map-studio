@@ -39,7 +39,19 @@ export const openProject = () => {
       return
     }
     // 2. judgment is raw project or not
+
+    // if result/potree directory exist, it is not raw project
+    const isRawProject = !fs.existsSync(`${result}/potree`)
+
     // 3. if raw project, convert to project
-    // 4. if not raw project, load it
+    if (isRawProject) {
+      ipcRenderer.invoke('convert-project', result).then((result) => {
+        console.log('[convert-project]', result)
+      })
+      return
+    } else {
+      // 4. if not raw project, load it
+      
+    }
   })
 }
