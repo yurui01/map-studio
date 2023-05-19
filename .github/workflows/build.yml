@@ -31,12 +31,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # - name: Upload Artifact
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: release_on_${{ matrix. os }}
-      #     path: release/
-      #     retention-days: 5
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: release_on_${{ matrix. os }}
+          path: release/
+          retention-days: 5
+
+      - name: List all files
+        run: ls -R release
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

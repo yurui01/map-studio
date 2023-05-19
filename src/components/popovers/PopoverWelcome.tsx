@@ -74,7 +74,7 @@ export default function PopoverWelcome({
             color: '#fff'
           }}
         >
-          0.1.9-beta.3
+          0.1.9-beta.4
         </Text>
         <Image src={WelcomeBackdrop} alt="welcome" height={350} />
       </Box>
