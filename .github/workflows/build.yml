@@ -38,11 +38,9 @@ jobs:
           path: release/
           retention-days: 5
 
-      - name: List all files
-        run: ls -R release
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: release/**/*.{exe,dmg}
+          files: |
+            ${{ github.workspace }}/release/**/*.exe
