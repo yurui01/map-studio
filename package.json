@@ -1,6 +1,6 @@
 {
   "name": "map-studio",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "dist-electron/main/index.js",
   "author": "yurui",
   "private": true,
@@ -53,20 +53,5 @@
   },
   "engines": {
     "node": "^14.18.0 || >=16.0.0"
-  },
-  "config": {
-    "forge": {
-      "publishers": [
-        {
-          "name": "@electron-forge/publisher-github",
-          "config": {
-            "repository": {
-              "owner": "yurui01",
-              "name": "map-studio"
-            }
-          }
-        }
-      ]
-    }
   }
 }

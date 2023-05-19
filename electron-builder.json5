@@ -5,7 +5,7 @@
   appId: 'com.allymeta.mapstudio',
   asar: true,
   directories: {
-    output: 'release'
+    output: 'release/${version}'
   },
   files: ['dist-electron', 'dist'],
   mac: {
