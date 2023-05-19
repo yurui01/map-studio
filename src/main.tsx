@@ -2,8 +2,11 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import { MantineProvider, Global } from '@mantine/core'
+import { Notifications } from "@mantine/notifications";
+
 import './samples/node-api'
 import './index.scss'
+
 // fonts
 import UbuntuRegular from './assets/fonts/Ubuntu-Regular.ttf'
 import UbuntuBold from './assets/fonts/Ubuntu-Bold.ttf'
@@ -47,6 +50,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     }}
   >
     <UbuntuFont />
+    <Notifications />
     <App />
   </MantineProvider>
 )
