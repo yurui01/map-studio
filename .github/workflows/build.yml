@@ -27,8 +27,6 @@ jobs:
 
       - name: build application
         run: npm run build
-        env:
-          GH_TOKEN: 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
 
       - name: create release
         uses: softprops/action-gh-release@v1
