@@ -74,7 +74,7 @@ export default function PopoverWelcome({
             color: '#fff'
           }}
         >
-          v0.1.8
+          v0.1.9
         </Text>
         <Image src={WelcomeBackdrop} alt="welcome" height={350} />
       </Box>
