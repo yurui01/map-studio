@@ -18,6 +18,7 @@ import {
   PopoverSetting,
   PopoverWelcome
 } from './components/popovers'
+import { useProject } from './zustand/useProject'
 
 function App() {
   const [openedWelcome, welcomeHandler] = useDisclosure(true)
@@ -25,6 +26,9 @@ function App() {
   const [openedAbout, aboutHandler] = useDisclosure(false)
 
   const [openedLoopClosePanel, toggleLoopClosePanel] = useToggle([false, true])
+
+  // zustand
+  const project = useProject((state) => state.project)
 
   return (
     <>
@@ -38,7 +42,7 @@ function App() {
 
         <Allotment defaultSizes={[35, 45, 20]}>
           <Allotment.Pane>
-            <PanelView />
+            <PanelView path={project?.path} />
           </Allotment.Pane>
           <Allotment.Pane visible={openedLoopClosePanel}>
             <PanelLoopClose />

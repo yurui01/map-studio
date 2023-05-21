@@ -3,6 +3,9 @@ import { cwd } from 'node:process'
 import { ipcRenderer } from 'electron'
 import fs from 'fs'
 import { notifications } from '@mantine/notifications'
+import { apsFullMsg } from '@/proto/aps_msgs'
+import { IProject } from '@/types/project'
+import { useProject } from '@/zustand/useProject'
 
 ipcRenderer.on('main-process-message', (_event, ...args) => {
   console.log('[Receive Main-process message]:', ...args)
@@ -42,16 +45,44 @@ export const openProject = () => {
 
     // if result/potree directory exist, it is not raw project
     const isRawProject = !fs.existsSync(`${result}/potree`)
-
+    console.log(isRawProject)
     // 3. if raw project, convert to project
     if (isRawProject) {
-      ipcRenderer.invoke('convert-project', result).then((result) => {
-        console.log('[convert-project]', result)
-      })
+      const msg = apsFullMsg
+        .encode({
+          topicName: '/aps/convert/import/set',
+          topicType: 0,
+          convertImportParam: {
+            dataDir: result,
+            amapName: isAMAP,
+            bagName: '',
+            imgInfoFileName: '',
+            cfgName: ''
+          }
+        })
+        .finish()
+
+      // start loading
+
+      // send convert project message
+      ipcRenderer
+        .invoke('convert-project', JSON.stringify(apsFullMsg.decode(msg)))
+        .then((result) => {
+          // stop loading
+        })
       return
     } else {
       // 4. if not raw project, load it
-      
+      const project: IProject = {
+        name: projectName,
+        path: result,
+        footpring: '',
+        pointcloud: '',
+        video: ''
+      }
+
+      // set project
+      useProject.getState().setProject(project)
     }
   })
 }

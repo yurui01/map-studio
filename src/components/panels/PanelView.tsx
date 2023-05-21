@@ -17,7 +17,11 @@ const { Potree } = window
 
 let viewer: any
 
-export default function PanelView() {
+interface PanelViewProps {
+  path?: string
+}
+
+export default function PanelView({ path }: PanelViewProps) {
   const axesRef = useRef<THREE.AxesHelper | null>(null)
   const gridRef = useRef<THREE.GridHelper | null>(null)
 
@@ -25,7 +29,7 @@ export default function PanelView() {
     total: {
       label: '点总数',
       value: Number(281112324).toLocaleString(),
-      editable: false,
+      editable: false
     },
     size: {
       label: '点大小',
@@ -152,6 +156,26 @@ export default function PanelView() {
 
     viewer.scene.view.setView([10, 10, 10], [0, 0, 0])
   }, [])
+
+  useEffect(() => {
+    if (path) {
+      Potree.loadPointCloud(
+        `file://${path}/potree/metadata.json`,
+        'pointcloud',
+        (e: any) => {
+          let { pointcloud } = e
+          viewer.scene.addPointCloud(pointcloud)
+          viewer.fitToScreen()
+          pointcloud.material.activeAttributeName = 'elevation'
+          pointcloud.material.size = 1
+          pointcloud.material.shape = 0
+          pointcloud.material.miniSize = 0
+          pointcloud.material.pointSizeType = 0
+          pointcloud.material.opacity = 1
+        }
+      )
+    }
+  }, [path])
 
   return (
     <>
