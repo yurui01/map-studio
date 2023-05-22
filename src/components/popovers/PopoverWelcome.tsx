@@ -15,6 +15,7 @@ import { IconFile, IconFolderOpen, Iconify } from '@/assets/icons'
 
 // assets
 import WelcomeBackdrop from '@/assets/images/welcome.png'
+import { openProject } from '@/samples/node-api'
 
 interface PopoverWelcomeProps {
   opened: boolean
@@ -101,6 +102,10 @@ export default function PopoverWelcome({
                       : theme.colors.gray[1]
                 }
               })}
+              onClick={() => {
+                openProject()
+                onClose()
+              }}
             >
               打开文件夹
             </Button>

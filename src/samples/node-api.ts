@@ -1,7 +1,8 @@
+import fs from 'fs'
 import { lstat } from 'node:fs/promises'
 import { cwd } from 'node:process'
+import Papa from 'papaparse'
 import { ipcRenderer } from 'electron'
-import fs from 'fs'
 import { notifications } from '@mantine/notifications'
 import { apsFullMsg } from '@/proto/aps_msgs'
 import { IProject } from '@/types/project'
@@ -18,6 +19,29 @@ lstat(cwd())
   .catch((err) => {
     console.error(err)
   })
+
+const loadFootprintCSV = (path: string) => {
+  const csvFile = fs.readFileSync(path, 'utf-8')
+  const csvData = Papa.parse(csvFile, { header: false })
+
+  return csvData.data.map((row: any) => {
+    return {
+      id: row[0] as string,
+      timestamp: row[1] as string,
+      position: [
+        parseFloat(row[2]),
+        parseFloat(row[3]),
+        parseFloat(row[4])
+      ] as [number, number, number],
+      orientation: [
+        parseFloat(row[5]),
+        parseFloat(row[6]),
+        parseFloat(row[7]),
+        parseFloat(row[8])
+      ] as [number, number, number, number]
+    }
+  })
+}
 
 export const openProject = () => {
   ipcRenderer.invoke('open-project').then((result) => {
@@ -73,10 +97,13 @@ export const openProject = () => {
       return
     } else {
       // 4. if not raw project, load it
+
+      const footprint = loadFootprintCSV(`${result}/pose.csv`)
+      console.log(footprint)
       const project: IProject = {
         name: projectName,
         path: result,
-        footpring: '',
+        footprint,
         pointcloud: '',
         video: ''
       }

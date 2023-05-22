@@ -42,10 +42,14 @@ function App() {
 
         <Allotment defaultSizes={[35, 45, 20]}>
           <Allotment.Pane>
-            <PanelView path={project?.path} />
+            <PanelView
+              path={project?.path}
+              footprint={project?.footprint}
+              raycaster={openedLoopClosePanel}
+            />
           </Allotment.Pane>
           <Allotment.Pane visible={openedLoopClosePanel}>
-            <PanelLoopClose />
+            <PanelLoopClose onClose={toggleLoopClosePanel} />
           </Allotment.Pane>
           <Allotment.Pane maxSize={350} minSize={350}>
             <Allotment vertical>

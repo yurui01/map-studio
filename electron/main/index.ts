@@ -2,7 +2,8 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import { update } from './update'
-import { apsFullMsg } from '@/proto/aps_msgs'
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
+import { MessageType, apsFullMsg } from '@/proto/aps_msgs'
 
 // The built directory structure
 //
@@ -37,6 +38,8 @@ if (!app.requestSingleInstanceLock()) {
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow | null = null
+let cpp: ChildProcessWithoutNullStreams | null = null
+
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
 const url = process.env.VITE_DEV_SERVER_URL
@@ -55,7 +58,7 @@ async function createWindow() {
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
       contextIsolation: false,
-      webSecurity: false,
+      webSecurity: false
     }
   })
 
@@ -109,6 +112,15 @@ app.on('activate', () => {
   }
 })
 
+app.on('ready', () => {
+  cpp = spawn(join(process.env.PUBLIC, 'cpp', 'aps_process_app'))
+
+  cpp.stdout.on('data', (data: any) => {
+    const msg = apsFullMsg.decode(data)
+    console.log(msg)
+  })
+})
+
 // New window example arg: new windows url
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
@@ -146,5 +158,11 @@ ipcMain.handle('open-project', async (event, payload) => {
 })
 
 ipcMain.handle('convert-project', async (event, payload) => {
-  if (!win) return
+  if (!win || !cpp) return
+
+  cpp.stdin.write(payload)
+})
+
+ipcMain.handle('loop-select-set', async (event, payload) => {
+  if (!win || !cpp) return
 })
