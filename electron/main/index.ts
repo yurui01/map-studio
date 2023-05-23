@@ -3,7 +3,7 @@ import { release } from 'node:os'
 import { join } from 'node:path'
 import { update } from './update'
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
-import { MessageType, apsFullMsg } from '@/proto/aps_msgs'
+import { MessageType, apsFullMsg } from '../../proto/aps_msgs'
 
 // The built directory structure
 //
