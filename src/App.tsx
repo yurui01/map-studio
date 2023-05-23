@@ -19,6 +19,7 @@ import {
   PopoverWelcome
 } from './components/popovers'
 import { useProject } from './zustand/useProject'
+import { useEffect } from 'react';
 
 function App() {
   const [openedWelcome, welcomeHandler] = useDisclosure(true)
@@ -68,6 +69,7 @@ function App() {
         <PopoverAbout opened={openedAbout} onClose={aboutHandler.close} />
         <PopoverWelcome opened={openedWelcome} onClose={welcomeHandler.close} />
         <PopoverSetting opened={openedSetting} onClose={settingHandler.close} />
+        <Popoverloading opened={opened}
       </Box>
     </>
   )
