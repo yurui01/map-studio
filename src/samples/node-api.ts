@@ -4,7 +4,7 @@ import { cwd } from 'node:process'
 import Papa from 'papaparse'
 import { ipcRenderer } from 'electron'
 import { notifications } from '@mantine/notifications'
-import { apsFullMsg } from '@/proto/aps_msgs'
+import { apsFullMsg } from '../../proto/aps_msgs'
 import { IProject } from '@/types/project'
 import { useProject } from '@/zustand/useProject'
 
@@ -85,9 +85,8 @@ export const openProject = () => {
           }
         })
         .finish()
-
+        msg.toString()
       // start loading
-
       // send convert project message
       ipcRenderer
         .invoke('convert-project', JSON.stringify(apsFullMsg.decode(msg)))

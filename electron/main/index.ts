@@ -3,7 +3,8 @@ import { release } from 'node:os'
 import { join } from 'node:path'
 import { update } from './update'
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
-import { MessageType, apsFullMsg } from '@/proto/aps_msgs'
+import { MessageType, apsFullMsg } from '../../proto/aps_msgs'
+import { useProject } from '@/zustand/useProject'
 
 // The built directory structure
 //
@@ -113,11 +114,24 @@ app.on('activate', () => {
 })
 
 app.on('ready', () => {
-  cpp = spawn(join(process.env.PUBLIC, 'cpp', 'aps_process_app'))
+  cpp = spawn(join(process.env.PUBLIC, 'cpp', 'APS_PROCESS_APP'))
 
-  cpp.stdout.on('data', (data: any) => {
-    const msg = apsFullMsg.decode(data)
-    console.log(msg)
+  // get cpp stdout no wrap
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      if (msg.processStatus === 'processing') {
+        useProject.getState().setLoading(true)
+      } else {
+        useProject.getState().setLoading(false)
+      }
+
+    }
+    catch (err) {
+      console.log(err)
+    }
+
   })
 })
 
@@ -159,8 +173,8 @@ ipcMain.handle('open-project', async (event, payload) => {
 
 ipcMain.handle('convert-project', async (event, payload) => {
   if (!win || !cpp) return
-
-  cpp.stdin.write(payload)
+  console.log(payload)
+  cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
 })
 
 ipcMain.handle('loop-select-set', async (event, payload) => {
