@@ -14,6 +14,7 @@ import IconExport from '@iconify/icons-ph/export-fill'
 import IconRecycle from '@iconify/icons-ph/recycle'
 import IconFrameCorners from '@iconify/icons-ph/frame-corners'
 import IconCrop from '@iconify/icons-ph/crop-fill'
+import IconNotification from '@iconify/icons-ph/notification-fill'
 
 // iconoir
 import IconAxes from '@iconify/icons-iconoir/axes'
@@ -42,5 +43,6 @@ export {
   IconExport,
   IconRecycle,
   IconFrameCorners,
-  IconCrop
+  IconCrop,
+  IconNotification
 }

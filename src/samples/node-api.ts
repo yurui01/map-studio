@@ -43,10 +43,12 @@ const loadFootprintCSV = (path: string) => {
   })
 }
 
-export const openProject = () => {
-  ipcRenderer.invoke('open-project').then((result) => {
+export const openProject = (path?: string) => {
+  ipcRenderer.invoke('open-project', path).then((result) => {
     console.log('[open-project]', result)
-
+    if (path) {
+      result = path
+    }
     // 1. judgment if result is exist in file system
     if (!fs.existsSync(result)) return
 
@@ -85,13 +87,15 @@ export const openProject = () => {
           }
         })
         .finish()
-        msg.toString()
+      msg.toString()
       // start loading
+      useProject.getState().setLoading(true)
       // send convert project message
       ipcRenderer
         .invoke('convert-project', JSON.stringify(apsFullMsg.decode(msg)))
         .then((result) => {
           // stop loading
+          console.log(result)
         })
       return
     } else {

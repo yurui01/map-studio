@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { update } from './update'
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
 import { MessageType, apsFullMsg } from '../../proto/aps_msgs'
-import { useProject } from '@/zustand/useProject'
+import { useProject } from '../../src/zustand/useProject'
 
 // The built directory structure
 //
@@ -117,22 +117,20 @@ app.on('ready', () => {
   cpp = spawn(join(process.env.PUBLIC, 'cpp', 'APS_PROCESS_APP'))
 
   // get cpp stdout no wrap
-  cpp.stdout.on('data', (data) => {
-    console.log(data.toString())
-    try {
-      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
-      if (msg.processStatus === 'processing') {
-        useProject.getState().setLoading(true)
-      } else {
-        useProject.getState().setLoading(false)
-      }
+  // cpp.stdout.on('data', (data) => {
+  //   try {
+  //     const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+  //     console.log(msg)
+  //     if (msg.topicName === '/aps/process_status') {
+  //       win?.webContents.send('process-status', msg)
+  //     }
 
-    }
-    catch (err) {
-      console.log(err)
-    }
+  //   }
+  //   catch (err) {
+  //     // console.log(err)
+  //   }
 
-  })
+  // })
 })
 
 // New window example arg: new windows url
@@ -158,7 +156,7 @@ ipcMain.handle('app-exit', (_, arg) => {
 })
 
 ipcMain.handle('open-project', async (event, payload) => {
-  if (!win) return
+  if (!win || payload) return
 
   const result = await dialog.showOpenDialog(win, {
     properties: ['openDirectory', 'multiSelections']
@@ -173,8 +171,33 @@ ipcMain.handle('open-project', async (event, payload) => {
 
 ipcMain.handle('convert-project', async (event, payload) => {
   if (!win || !cpp) return
-  console.log(payload)
+
   cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
+
+  let processing = false
+  let finished = false
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+
+      if (msg.processStatus === 'processing') {
+        processing = true
+      }
+      if (msg.processStatus === 'idle' && processing) {
+        processing = false
+        finished = true
+      }
+      if (finished) {
+        // remove stdout listener
+        win?.webContents.send('convert-project-reply', JSON.parse(payload).convertImportParam.dataDir)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    }
+    catch (err) {
+      // console.log(err)
+    }
+  })
 })
 
 ipcMain.handle('loop-select-set', async (event, payload) => {

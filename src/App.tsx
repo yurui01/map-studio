@@ -16,10 +16,14 @@ import 'allotment/dist/style.css'
 import {
   PopoverAbout,
   PopoverSetting,
-  PopoverWelcome
+  PopoverWelcome,
+  PopoverLoading
 } from './components/popovers'
 import { useProject } from './zustand/useProject'
 import { useEffect } from 'react';
+import { ipcRenderer } from 'electron'
+import { apsFullMsg } from 'proto/aps_msgs'
+import { openProject } from './samples/node-api'
 
 function App() {
   const [openedWelcome, welcomeHandler] = useDisclosure(true)
@@ -30,7 +34,16 @@ function App() {
 
   // zustand
   const project = useProject((state) => state.project)
-
+  const { isLoading, setLoading } = useProject((state) => state)
+  useEffect(() => {
+    ipcRenderer.on('convert-project-reply', (event, payload) => {
+      console.log(payload)
+      if (payload) {
+        openProject(payload)
+        setLoading(false)
+      }
+    })
+  }, [])
   return (
     <>
       <Box w="100vw" h="100vh" display="flex" sx={{ flexDirection: 'column' }}>
@@ -65,11 +78,10 @@ function App() {
         </Allotment>
 
         <Statusbar />
-
         <PopoverAbout opened={openedAbout} onClose={aboutHandler.close} />
         <PopoverWelcome opened={openedWelcome} onClose={welcomeHandler.close} />
         <PopoverSetting opened={openedSetting} onClose={settingHandler.close} />
-        <Popoverloading opened={opened}
+        <PopoverLoading opened={isLoading} onClose={() => setLoading(false)} />
       </Box>
     </>
   )

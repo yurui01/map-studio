@@ -1,4 +1,5 @@
-import { Modal, Box } from '@mantine/core'
+import { IconNotification, Iconify } from '@/assets/icons'
+import { Modal, Box, Text, Alert, Center, LoadingOverlay, Loader, Group, Stack } from '@mantine/core'
 import { NavigationProgress, nprogress } from '@mantine/nprogress'
 import { useEffect } from 'react'
 
@@ -11,14 +12,15 @@ export default function PopoverLoading({
   opened,
   onClose
 }: PopoverLoadingProps) {
-  useEffect(() => {
-    nprogress.start()
 
-    return () => {
+  useEffect(() => {
+    if (opened) {
+      nprogress.start()
+    } else {
       nprogress.complete()
     }
-  }, [])
-  
+  }, [opened])
+
   return (
     <Modal
       opened={opened}
@@ -26,12 +28,23 @@ export default function PopoverLoading({
       transitionProps={{ duration: 10 }}
       centered
       withCloseButton={false}
-      size="30%"
+      size="25%"
       trapFocus
     >
-      <div>正在加载...</div>
       <Box>
-        <NavigationProgress withinPortal={false} />
+        <Group align='center'>
+          <Iconify icon={IconNotification} />
+          <Text fz='sm' fw='bold'>提示</Text>
+        </Group>
+
+        <Center mx='auto'>
+          <Group>
+            <Text fz='xs' py={40}>
+              正在加载，请稍后
+            </Text>
+            <Loader variant="dots" />
+          </Group>
+        </Center>
       </Box>
     </Modal>
   )
