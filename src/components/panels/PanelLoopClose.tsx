@@ -30,6 +30,7 @@ import { useLoopClose } from '@/zustand/useLoopClose'
 import DISC from '@/assets/images/disc.png'
 import { ipcRenderer } from 'electron'
 import { useProject } from '@/zustand/useProject'
+import { apsFullMsg } from '../../../proto/aps_msgs'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -141,11 +142,24 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   useEffect(() => {
     if (currentFrame && referenceFrame) {
       // invoke select-set
-      ipcRenderer.invoke('loop-select-set', {
-        path: project!.path,
-        currentFrame,
-        referenceFrame
-      })
+      const msg = apsFullMsg.encode({
+        topicName: '/aps/loop/manual/select/set',
+        topicType: 0,
+        loopManuelSelectParam: {
+          processReturn: {
+            status: 0,
+            msg: ''
+          },
+          dataDir: project!.path,
+          amapName: project!.amap,
+          curScanId: Number(currentFrame.id),
+          curScanTime: Number(currentFrame.timestamp),
+          refScanId: Number(referenceFrame.id),
+          refScanTime: Number(referenceFrame.timestamp)
+        }
+      }).finish()
+
+      ipcRenderer.invoke('loop-select-set',JSON.stringify(apsFullMsg.decode(msg)) )
     }
   }, [currentFrame && referenceFrame])
 

@@ -202,4 +202,16 @@ ipcMain.handle('convert-project', async (event, payload) => {
 
 ipcMain.handle('loop-select-set', async (event, payload) => {
   if (!win || !cpp) return
+  console.log(payload)
+  cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      console.log(msg)
+    } catch (err) {
+
+    }
+  })
 })

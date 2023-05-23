@@ -105,6 +105,7 @@ export const openProject = (path?: string) => {
       console.log(footprint)
       const project: IProject = {
         name: projectName,
+        amap: isAMAP,
         path: result,
         footprint,
         pointcloud: '',
@@ -114,5 +115,12 @@ export const openProject = (path?: string) => {
       // set project
       useProject.getState().setProject(project)
     }
+  })
+}
+
+
+export const loopSelectSet = () => {
+  ipcRenderer.invoke('loop-select-set').then((result) => {
+    console.log('[loop-select-set]', result)
   })
 }

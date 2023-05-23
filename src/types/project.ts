@@ -8,6 +8,7 @@ export interface IPose {
 export interface IProject {
   name: string
   path: string
+  amap: string
   footprint: IPose[]
   video: string
   pointcloud: string
