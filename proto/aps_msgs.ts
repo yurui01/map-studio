@@ -192,9 +192,9 @@ export interface apsFullMsg {
   convertImportParam?: apsConvertImportParam | undefined;
   convertExportParam?: apsConvertExportParam | undefined;
   savePrjectParam?: apsSaveProjectParam | undefined;
-  loopManuelSelectParam?: apsLoopManualSelectParam | undefined;
-  loopManuelMatchParam?: apsLoopManualMatchParam | undefined;
-  loopManuelOptimizeParam?: apsLoopManualOptimizeParam | undefined;
+  loopManualSelectParam?: apsLoopManualSelectParam | undefined;
+  loopManualMatchParam?: apsLoopManualMatchParam | undefined;
+  loopManualOptimizeParam?: apsLoopManualOptimizeParam | undefined;
   loopAutoSearchParam?: apsLoopAutoSearchParam | undefined;
   globalControlParam?: apsGlobalControlParam | undefined;
   globalRtkParam?: apsGlobalRTKParam | undefined;
@@ -1660,9 +1660,9 @@ function createBaseapsFullMsg(): apsFullMsg {
     convertImportParam: undefined,
     convertExportParam: undefined,
     savePrjectParam: undefined,
-    loopManuelSelectParam: undefined,
-    loopManuelMatchParam: undefined,
-    loopManuelOptimizeParam: undefined,
+    loopManualSelectParam: undefined,
+    loopManualMatchParam: undefined,
+    loopManualOptimizeParam: undefined,
     loopAutoSearchParam: undefined,
     globalControlParam: undefined,
     globalRtkParam: undefined,
@@ -1689,14 +1689,14 @@ export const apsFullMsg = {
     if (message.savePrjectParam !== undefined) {
       apsSaveProjectParam.encode(message.savePrjectParam, writer.uint32(42).fork()).ldelim();
     }
-    if (message.loopManuelSelectParam !== undefined) {
-      apsLoopManualSelectParam.encode(message.loopManuelSelectParam, writer.uint32(50).fork()).ldelim();
+    if (message.loopManualSelectParam !== undefined) {
+      apsLoopManualSelectParam.encode(message.loopManualSelectParam, writer.uint32(50).fork()).ldelim();
     }
-    if (message.loopManuelMatchParam !== undefined) {
-      apsLoopManualMatchParam.encode(message.loopManuelMatchParam, writer.uint32(58).fork()).ldelim();
+    if (message.loopManualMatchParam !== undefined) {
+      apsLoopManualMatchParam.encode(message.loopManualMatchParam, writer.uint32(58).fork()).ldelim();
     }
-    if (message.loopManuelOptimizeParam !== undefined) {
-      apsLoopManualOptimizeParam.encode(message.loopManuelOptimizeParam, writer.uint32(66).fork()).ldelim();
+    if (message.loopManualOptimizeParam !== undefined) {
+      apsLoopManualOptimizeParam.encode(message.loopManualOptimizeParam, writer.uint32(66).fork()).ldelim();
     }
     if (message.loopAutoSearchParam !== undefined) {
       apsLoopAutoSearchParam.encode(message.loopAutoSearchParam, writer.uint32(74).fork()).ldelim();
@@ -1766,21 +1766,21 @@ export const apsFullMsg = {
             break;
           }
 
-          message.loopManuelSelectParam = apsLoopManualSelectParam.decode(reader, reader.uint32());
+          message.loopManualSelectParam = apsLoopManualSelectParam.decode(reader, reader.uint32());
           continue;
         case 7:
           if (tag !== 58) {
             break;
           }
 
-          message.loopManuelMatchParam = apsLoopManualMatchParam.decode(reader, reader.uint32());
+          message.loopManualMatchParam = apsLoopManualMatchParam.decode(reader, reader.uint32());
           continue;
         case 8:
           if (tag !== 66) {
             break;
           }
 
-          message.loopManuelOptimizeParam = apsLoopManualOptimizeParam.decode(reader, reader.uint32());
+          message.loopManualOptimizeParam = apsLoopManualOptimizeParam.decode(reader, reader.uint32());
           continue;
         case 9:
           if (tag !== 74) {
@@ -1844,14 +1844,14 @@ export const apsFullMsg = {
         ? apsConvertExportParam.fromJSON(object.convertExportParam)
         : undefined,
       savePrjectParam: isSet(object.savePrjectParam) ? apsSaveProjectParam.fromJSON(object.savePrjectParam) : undefined,
-      loopManuelSelectParam: isSet(object.loopManuelSelectParam)
-        ? apsLoopManualSelectParam.fromJSON(object.loopManuelSelectParam)
+      loopManualSelectParam: isSet(object.loopManualSelectParam)
+        ? apsLoopManualSelectParam.fromJSON(object.loopManualSelectParam)
         : undefined,
-      loopManuelMatchParam: isSet(object.loopManuelMatchParam)
-        ? apsLoopManualMatchParam.fromJSON(object.loopManuelMatchParam)
+      loopManualMatchParam: isSet(object.loopManualMatchParam)
+        ? apsLoopManualMatchParam.fromJSON(object.loopManualMatchParam)
         : undefined,
-      loopManuelOptimizeParam: isSet(object.loopManuelOptimizeParam)
-        ? apsLoopManualOptimizeParam.fromJSON(object.loopManuelOptimizeParam)
+      loopManualOptimizeParam: isSet(object.loopManualOptimizeParam)
+        ? apsLoopManualOptimizeParam.fromJSON(object.loopManualOptimizeParam)
         : undefined,
       loopAutoSearchParam: isSet(object.loopAutoSearchParam)
         ? apsLoopAutoSearchParam.fromJSON(object.loopAutoSearchParam)
@@ -1880,14 +1880,14 @@ export const apsFullMsg = {
       : undefined);
     message.savePrjectParam !== undefined &&
       (obj.savePrjectParam = message.savePrjectParam ? apsSaveProjectParam.toJSON(message.savePrjectParam) : undefined);
-    message.loopManuelSelectParam !== undefined && (obj.loopManuelSelectParam = message.loopManuelSelectParam
-      ? apsLoopManualSelectParam.toJSON(message.loopManuelSelectParam)
+    message.loopManualSelectParam !== undefined && (obj.loopManualSelectParam = message.loopManualSelectParam
+      ? apsLoopManualSelectParam.toJSON(message.loopManualSelectParam)
       : undefined);
-    message.loopManuelMatchParam !== undefined && (obj.loopManuelMatchParam = message.loopManuelMatchParam
-      ? apsLoopManualMatchParam.toJSON(message.loopManuelMatchParam)
+    message.loopManualMatchParam !== undefined && (obj.loopManualMatchParam = message.loopManualMatchParam
+      ? apsLoopManualMatchParam.toJSON(message.loopManualMatchParam)
       : undefined);
-    message.loopManuelOptimizeParam !== undefined && (obj.loopManuelOptimizeParam = message.loopManuelOptimizeParam
-      ? apsLoopManualOptimizeParam.toJSON(message.loopManuelOptimizeParam)
+    message.loopManualOptimizeParam !== undefined && (obj.loopManualOptimizeParam = message.loopManualOptimizeParam
+      ? apsLoopManualOptimizeParam.toJSON(message.loopManualOptimizeParam)
       : undefined);
     message.loopAutoSearchParam !== undefined && (obj.loopAutoSearchParam = message.loopAutoSearchParam
       ? apsLoopAutoSearchParam.toJSON(message.loopAutoSearchParam)
@@ -1922,16 +1922,16 @@ export const apsFullMsg = {
     message.savePrjectParam = (object.savePrjectParam !== undefined && object.savePrjectParam !== null)
       ? apsSaveProjectParam.fromPartial(object.savePrjectParam)
       : undefined;
-    message.loopManuelSelectParam =
-      (object.loopManuelSelectParam !== undefined && object.loopManuelSelectParam !== null)
-        ? apsLoopManualSelectParam.fromPartial(object.loopManuelSelectParam)
+    message.loopManualSelectParam =
+      (object.loopManualSelectParam !== undefined && object.loopManualSelectParam !== null)
+        ? apsLoopManualSelectParam.fromPartial(object.loopManualSelectParam)
         : undefined;
-    message.loopManuelMatchParam = (object.loopManuelMatchParam !== undefined && object.loopManuelMatchParam !== null)
-      ? apsLoopManualMatchParam.fromPartial(object.loopManuelMatchParam)
+    message.loopManualMatchParam = (object.loopManualMatchParam !== undefined && object.loopManualMatchParam !== null)
+      ? apsLoopManualMatchParam.fromPartial(object.loopManualMatchParam)
       : undefined;
-    message.loopManuelOptimizeParam =
-      (object.loopManuelOptimizeParam !== undefined && object.loopManuelOptimizeParam !== null)
-        ? apsLoopManualOptimizeParam.fromPartial(object.loopManuelOptimizeParam)
+    message.loopManualOptimizeParam =
+      (object.loopManualOptimizeParam !== undefined && object.loopManualOptimizeParam !== null)
+        ? apsLoopManualOptimizeParam.fromPartial(object.loopManualOptimizeParam)
         : undefined;
     message.loopAutoSearchParam = (object.loopAutoSearchParam !== undefined && object.loopAutoSearchParam !== null)
       ? apsLoopAutoSearchParam.fromPartial(object.loopAutoSearchParam)
