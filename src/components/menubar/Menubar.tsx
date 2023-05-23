@@ -222,7 +222,7 @@ export default function Menubar({
             </RadixMenubar.Trigger>
             <RadixMenubar.Portal>
               <RadixMenubar.Content className={classes.content}>
-                <RadixMenubar.Item className={classes.item} onClick={openProject}>
+                <RadixMenubar.Item className={classes.item} onClick={() => openProject()}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
                       <Iconify icon={IconFile} width={16} />
@@ -285,7 +285,7 @@ export default function Menubar({
                 <RadixMenubar.Item className={classes.item} onClick={toggle}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
-                      <Iconify icon={IconFrameCorners} width={16} color='blue' />
+                      <Iconify icon={IconFrameCorners} width={16} />
                     </Grid.Col>
                     <Grid.Col span={8}>
                       <Text fz="xs">切换全屏</Text>
