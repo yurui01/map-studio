@@ -22,6 +22,10 @@ import IconPerspectiveView from '@iconify/icons-iconoir/perspective-view'
 import IconOrthogonalView from '@iconify/icons-iconoir/orthogonal-view'
 import Icon3DSelectSolid from '@iconify/icons-iconoir/3d-select-solid'
 import Icon3dSelectPoint from '@iconify/icons-iconoir/3d-select-point'
+import IconPathArrow from '@iconify/icons-iconoir/path-arrow'
+import IconImage from '@iconify/icons-iconoir/media-image'
+import IconEye from '@iconify/icons-iconoir/eye-alt'
+import IconEyeClose from '@iconify/icons-iconoir/eye-close'
 
 export {
   Iconify,
@@ -44,5 +48,9 @@ export {
   IconRecycle,
   IconFrameCorners,
   IconCrop,
-  IconNotification
+  IconNotification,
+  IconPathArrow,
+  IconImage,
+  IconEye,
+  IconEyeClose
 }

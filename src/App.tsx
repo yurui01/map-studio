@@ -20,7 +20,7 @@ import {
   PopoverLoading
 } from './components/popovers'
 import { useProject } from './zustand/useProject'
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 import { ipcRenderer } from 'electron'
 import { apsFullMsg } from 'proto/aps_msgs'
 import { openProject } from './samples/node-api'
@@ -32,9 +32,14 @@ function App() {
 
   const [openedLoopClosePanel, toggleLoopClosePanel] = useToggle([false, true])
 
+  const [pointCloudVisible, togglePointCloudVisible] = useToggle([true, false])
+  const [footprintVisible, toggleFootprintVisible] = useToggle([true, false])
+
   // zustand
   const project = useProject((state) => state.project)
   const { isLoading, setLoading } = useProject((state) => state)
+
+
   useEffect(() => {
     ipcRenderer.on('convert-project-reply', (event, payload) => {
       console.log(payload)
@@ -44,6 +49,7 @@ function App() {
       }
     })
   }, [])
+
   return (
     <>
       <Box w="100vw" h="100vh" display="flex" sx={{ flexDirection: 'column' }}>
@@ -60,6 +66,8 @@ function App() {
               path={project?.path}
               footprint={project?.footprint}
               raycaster={openedLoopClosePanel}
+              pointCloudVisible={pointCloudVisible}
+              footprintVisible={footprintVisible}
             />
           </Allotment.Pane>
           <Allotment.Pane visible={openedLoopClosePanel}>
@@ -68,7 +76,10 @@ function App() {
           <Allotment.Pane maxSize={350} minSize={350}>
             <Allotment vertical>
               <Allotment.Pane>
-                <PanelDataTree />
+                <PanelDataTree
+                  onFootprintVisibleChange={toggleFootprintVisible}
+                  onPointCloudVisibleChange={togglePointCloudVisible}
+                />
               </Allotment.Pane>
               <Allotment.Pane>
                 <PanelProperties />

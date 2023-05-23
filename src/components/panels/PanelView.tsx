@@ -25,12 +25,16 @@ interface PanelViewProps {
   path?: string
   footprint?: IPose[]
   raycaster: boolean
+  pointCloudVisible: boolean
+  footprintVisible: boolean
 }
 
 export default function PanelView({
   path,
   footprint,
-  raycaster
+  raycaster,
+  pointCloudVisible = false,
+  footprintVisible = false
 }: PanelViewProps) {
   const axesRef = useRef<THREE.AxesHelper | null>(null)
   const gridRef = useRef<THREE.GridHelper | null>(null)
@@ -354,6 +358,19 @@ export default function PanelView({
       pointCloudRef.current.material.color = new THREE.Color(color)
     }
   }, [color])
+
+  useEffect(() => {
+    if (pointCloudRef.current) {
+      pointCloudRef.current.visible = pointCloudVisible
+    }
+  }, [pointCloudVisible])
+
+  useEffect(() => {
+    if (footprintRef.current) {
+      footprintRef.current.points.visible = footprintVisible
+      footprintRef.current.tube.visible = footprintVisible
+    }
+  }, [footprintVisible])
 
   return (
     <>

@@ -27,7 +27,7 @@ export default function Iconify({
         justifyContent: 'center',
       }}
     >
-      <Icon icon={icon} width={width} height={height} />
+      <Icon icon={icon} width={width} height={height} color={color} />
     </Box>
   )
 }
