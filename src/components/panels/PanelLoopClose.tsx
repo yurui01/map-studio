@@ -21,6 +21,8 @@ import {
   Points,
   useTexture
 } from '@react-three/drei'
+import { load } from '@loaders.gl/core'
+import { LASLoader } from '@loaders.gl/las'
 
 // components
 import Toolbar from '../toolbar/Toolbar'
@@ -31,6 +33,8 @@ import DISC from '@/assets/images/disc.png'
 import { ipcRenderer } from 'electron'
 import { useProject } from '@/zustand/useProject'
 import { apsFullMsg } from '../../../proto/aps_msgs'
+import { shallow } from 'zustand/shallow'
+import fs from 'fs'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -58,31 +62,60 @@ const useStyles = createStyles((theme) => ({
 }))
 
 interface PointCloudMeshProps {
-  positions: Float32Array
+  positions: Float32Array | undefined
   color: string
   origin: [number, number, number]
-  orientation: [number, number, number, number]
+  orientation?: [number, number, number, number]
   axes: boolean
+  onChange?: (
+    position: [number, number, number],
+    rotation: [number, number, number, number]
+  ) => void
 }
 
 const PointCloudMesh = ({
   positions,
   color,
-  origin,
+  origin = [0, 0, 0],
   orientation,
-  axes
+  axes,
+  onChange
 }: PointCloudMeshProps) => {
   const sprite = useTexture(DISC)
+
+  const handleCurrentFrameDrag = (e: any) => {
+    // console.log(e.elements)
+    const matrix = new THREE.Matrix4().fromArray(e.elements)
+    const position = new THREE.Vector3().setFromMatrixPosition(matrix)
+    let rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
+    let originVe = new THREE.Vector3()
+      .fromArray([-origin[0], -origin[1], -origin[2]])
+      .applyQuaternion(rotation)
+    // console.log(origin, originVe)
+    const position1 = position
+      .sub(originVe)
+      .sub(new THREE.Vector3().fromArray(origin))
+    console.log(position1.toArray(), rotation.toArray())
+    onChange &&
+      onChange(
+        position1.toArray() as [number, number, number],
+        rotation.toArray() as [number, number, number, number]
+      )
+  }
 
   if (axes) {
     return (
       <group position={[-origin[0], -origin[1], -origin[2]]}>
         <PivotControls
+          offset={origin}
+          scale={3}
           rotation={
-            new THREE.Euler()
+            orientation &&
+            (new THREE.Euler()
               .setFromQuaternion(new THREE.Quaternion().fromArray(orientation))
-              .toArray() as [number, number, number]
+              .toArray() as [number, number, number])
           }
+          onDrag={handleCurrentFrameDrag}
         >
           <Points positions={positions}>
             <pointsMaterial
@@ -124,9 +157,19 @@ interface PanelLoopCloseProps {
 
 export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   const { classes, cx } = useStyles()
+
+  const [offset, setOffset] = useState<{
+    position: [number, number, number]
+    rotation: [number, number, number, number]
+  }>({
+    position: [0, 0, 0],
+    rotation: [0, 0, 0, 0]
+  })
+
   const [scrolled, setScrolled] = useState(false)
   const project = useProject((state) => state.project)
-  const { currentFrame, referenceFrame } = useLoopClose((state) => state)
+  const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame } =
+    useLoopClose((state) => state, shallow)
 
   const gridRef = useRef<THREE.GridHelper | null>(null)
   const gridHelperMaterial = new THREE.MeshBasicMaterial({
@@ -141,27 +184,63 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   useEffect(() => {
     if (currentFrame && referenceFrame) {
+      console.log('load')
       // invoke select-set
-      const msg = apsFullMsg.encode({
-        topicName: '/aps/loop/manual/select/set',
-        topicType: 0,
-        loopManuelSelectParam: {
-          processReturn: {
-            status: 0,
-            msg: ''
-          },
-          dataDir: project!.path,
-          amapName: project!.amap,
-          curScanId: Number(currentFrame.id),
-          curScanTime: Number(currentFrame.timestamp),
-          refScanId: Number(referenceFrame.id),
-          refScanTime: Number(referenceFrame.timestamp)
-        }
-      }).finish()
+      const msg = apsFullMsg
+        .encode({
+          topicName: '/aps/loop/manual/select/set',
+          topicType: 0,
+          loopManualSelectParam: {
+            processReturn: {
+              status: 0,
+              msg: ''
+            },
+            dataDir: project!.path,
+            amapName: project!.amap,
+            curScanId: Number(currentFrame.id),
+            curScanTime: Number(currentFrame.timestamp),
+            refScanId: Number(referenceFrame.id),
+            refScanTime: Number(referenceFrame.timestamp)
+          }
+        })
+        .finish()
 
-      ipcRenderer.invoke('loop-select-set',JSON.stringify(apsFullMsg.decode(msg)) )
+      ipcRenderer.invoke(
+        'loop-select-set',
+        JSON.stringify(apsFullMsg.decode(msg))
+      )
+
+      ipcRenderer.on('loop-select-set-reply', (event, arg) => {
+        const currentLASFile = fs.readFileSync(`${project!.path}/cur_frame.las`)
+        const currentFrameLASBlob = new Blob([currentLASFile])
+        // load blob with loaders.gl
+        load(currentFrameLASBlob, LASLoader, { worker: false }).then((data) => {
+          const { header, attributes } = data
+          const { POSITION, COLOR_0 } = attributes
+          setCurrentFrame({
+            ...currentFrame,
+            pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
+          })
+        })
+
+        const referenceLASFile = fs.readFileSync(
+          `${project!.path}/ref_frame.las`
+        )
+        const referenceFrameLASBlob = new Blob([referenceLASFile])
+        // load blob with loaders.gl
+        load(referenceFrameLASBlob, LASLoader, { worker: false }).then(
+          (data) => {
+            const { header, attributes } = data
+            const { POSITION, COLOR_0 } = attributes
+            setReferenceFrame({
+              ...referenceFrame,
+              pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
+            })
+          }
+        )
+      })
     }
-  }, [currentFrame && referenceFrame])
+  }, [currentFrame?.id && referenceFrame?.id])
 
   useEffect(() => {
     return () => {
@@ -215,6 +294,32 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               labelColor="white"
             />
           </GizmoHelper>
+          <PointCloudMesh
+            positions={currentFrame?.pointcloud?.positions}
+            color="blue"
+            origin={
+              currentFrame
+                ? [currentFrame.px, currentFrame.py, currentFrame.pz]
+                : [0, 0, 0]
+            }
+            axes={true}
+            onChange={(position, rotation) => {
+              setOffset({
+                position: position as [number, number, number],
+                rotation: rotation as [number, number, number, number]
+              })
+            }}
+          />
+          <PointCloudMesh
+            positions={referenceFrame?.pointcloud?.positions}
+            color="red"
+            origin={
+              referenceFrame
+                ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
+                : [0, 0, 0]
+            }
+            axes={false}
+          />
           <OrbitControls
             makeDefault
             minDistance={0}
@@ -283,14 +388,15 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                     调整量
                   </Badge>
                 </td>
-                <td>1</td>
-                <td>0.9</td>
-                <td>0.9</td>
-                <td>0.9</td>
-                <td>0.9</td>
-                <td>0.9</td>
-                <td>0.9</td>
-                <td>0.9</td>
+                <td></td>
+                <td>{offset.position[0].toFixed(5)}</td>
+                <td>{offset.position[1].toFixed(5)}</td>
+                <td>{offset.position[2].toFixed(5)}</td>
+                <td>{offset.rotation[0]}</td>
+                <td>{offset.rotation[0]}</td>
+                <td>{offset.rotation[1]}</td>
+                <td>{offset.rotation[2]}</td>
+                <td>{offset.rotation[3]}</td>
               </tr>
             )}
           </tbody>

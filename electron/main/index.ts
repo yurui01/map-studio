@@ -206,10 +206,12 @@ ipcMain.handle('loop-select-set', async (event, payload) => {
   cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
 
   cpp.stdout.on('data', (data) => {
-    console.log(data.toString())
     try {
       const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
-      console.log(msg)
+      if (msg.topicName === '/aps/loop/manual/select/ack') {
+        win?.webContents.send('loop-select-set-reply', msg)
+        cpp!.stdout.removeAllListeners('data')
+      }
     } catch (err) {
 
     }
