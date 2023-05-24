@@ -278,6 +278,14 @@ export default function PanelView({
           point.position[1],
           point.position[2]
         )
+        const euler = new THREE.Euler().setFromQuaternion(
+          new THREE.Quaternion(
+            point.orientation[1],
+            point.orientation[2],
+            point.orientation[3],
+            point.orientation[0]
+          )
+        )
         sphere.userData = {
           id: point.id,
           timestamp: point.timestamp,
@@ -287,7 +295,10 @@ export default function PanelView({
           qw: point.orientation[0],
           qx: point.orientation[1],
           qy: point.orientation[2],
-          qz: point.orientation[3]
+          qz: point.orientation[3],
+          rx: euler.x,
+          ry: euler.y,
+          rz: euler.z
         } as IFrame
         points.add(sphere)
       }

@@ -114,23 +114,9 @@ app.on('activate', () => {
 })
 
 app.on('ready', () => {
-  cpp = spawn(join(process.env.PUBLIC, 'cpp', 'APS_PROCESS_APP'))
-
-  // get cpp stdout no wrap
-  // cpp.stdout.on('data', (data) => {
-  //   try {
-  //     const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
-  //     console.log(msg)
-  //     if (msg.topicName === '/aps/process_status') {
-  //       win?.webContents.send('process-status', msg)
-  //     }
-
-  //   }
-  //   catch (err) {
-  //     // console.log(err)
-  //   }
-
-  // })
+  if (process.platform === 'win32') {
+    cpp = spawn(join(process.env.PUBLIC, 'cpp', 'aps_process_app.exe'))
+  }
 })
 
 // New window example arg: new windows url

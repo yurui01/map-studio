@@ -160,13 +160,14 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   const [offset, setOffset] = useState<{
     position: [number, number, number]
-    rotation: [number, number, number, number]
+    rotation: [number, number, number]
   }>({
     position: [0, 0, 0],
-    rotation: [0, 0, 0, 0]
+    rotation: [0, 0, 0]
   })
 
   const [scrolled, setScrolled] = useState(false)
+
   const project = useProject((state) => state.project)
   const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame } =
     useLoopClose((state) => state, shallow)
@@ -184,7 +185,6 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   useEffect(() => {
     if (currentFrame && referenceFrame) {
-      console.log('load')
       // invoke select-set
       const msg = apsFullMsg
         .encode({
@@ -214,14 +214,16 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         const currentLASFile = fs.readFileSync(`${project!.path}/cur_frame.las`)
         const currentFrameLASBlob = new Blob([currentLASFile])
         // load blob with loaders.gl
-        load(currentFrameLASBlob, LASLoader, { worker: false }).then((data) => {
-          const { header, attributes } = data
-          const { POSITION, COLOR_0 } = attributes
-          setCurrentFrame({
-            ...currentFrame,
-            pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
-          })
-        })
+        load(currentFrameLASBlob, LASLoader, { worker: false }).then(
+          (data: any) => {
+            const { header, attributes } = data
+            const { POSITION, COLOR_0 } = attributes
+            setCurrentFrame({
+              ...currentFrame,
+              pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
+            })
+          }
+        )
 
         const referenceLASFile = fs.readFileSync(
           `${project!.path}/ref_frame.las`
@@ -229,7 +231,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         const referenceFrameLASBlob = new Blob([referenceLASFile])
         // load blob with loaders.gl
         load(referenceFrameLASBlob, LASLoader, { worker: false }).then(
-          (data) => {
+          (data: any) => {
             const { header, attributes } = data
             const { POSITION, COLOR_0 } = attributes
             setReferenceFrame({
@@ -303,10 +305,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 : [0, 0, 0]
             }
             axes={true}
-            onChange={(position, rotation) => {
+            onChange={(position, orientation) => {
+              const euler = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().fromArray(orientation))
               setOffset({
                 position: position as [number, number, number],
-                rotation: rotation as [number, number, number, number]
+                rotation: euler.toArray() as [number, number, number]
               })
             }}
           />
@@ -339,10 +342,9 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               <th>px</th>
               <th>py</th>
               <th>pz</th>
-              <th>qw</th>
-              <th>qx</th>
-              <th>qy</th>
-              <th>qz</th>
+              <th>rx</th>
+              <th>ry</th>
+              <th>rz</th>
             </tr>
           </thead>
           <tbody>
@@ -354,13 +356,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                   </Badge>
                 </td>
                 <td>{currentFrame.id}</td>
-                <td>{currentFrame.px}</td>
-                <td>{currentFrame.py}</td>
-                <td>{currentFrame.pz}</td>
-                <td>{currentFrame.qw}</td>
-                <td>{currentFrame.qx}</td>
-                <td>{currentFrame.qy}</td>
-                <td>{currentFrame.qz}</td>
+                <td>{currentFrame.px.toFixed(5)}</td>
+                <td>{currentFrame.py.toFixed(5)}</td>
+                <td>{currentFrame.pz.toFixed(5)}</td>
+                <td>{currentFrame.rx!.toFixed(5)}</td>
+                <td>{currentFrame.ry!.toFixed(5)}</td>
+                <td>{currentFrame.rz!.toFixed(5)}</td>
               </tr>
             )}
             {referenceFrame && (
@@ -371,13 +372,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                   </Badge>
                 </td>
                 <td>{referenceFrame.id}</td>
-                <td>{referenceFrame.px}</td>
-                <td>{referenceFrame.py}</td>
-                <td>{referenceFrame.pz}</td>
-                <td>{referenceFrame.qw}</td>
-                <td>{referenceFrame.qx}</td>
-                <td>{referenceFrame.qy}</td>
-                <td>{referenceFrame.qz}</td>
+                <td>{referenceFrame.px.toFixed(5)}</td>
+                <td>{referenceFrame.py.toFixed(5)}</td>
+                <td>{referenceFrame.pz.toFixed(5)}</td>
+                <td>{referenceFrame.rx!.toFixed(5)}</td>
+                <td>{referenceFrame.ry!.toFixed(5)}</td>
+                <td>{referenceFrame.rz!.toFixed(5)}</td>
               </tr>
             )}
 
@@ -392,11 +392,10 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{offset.position[0].toFixed(5)}</td>
                 <td>{offset.position[1].toFixed(5)}</td>
                 <td>{offset.position[2].toFixed(5)}</td>
-                <td>{offset.rotation[0]}</td>
-                <td>{offset.rotation[0]}</td>
-                <td>{offset.rotation[1]}</td>
-                <td>{offset.rotation[2]}</td>
-                <td>{offset.rotation[3]}</td>
+                <td>{offset.rotation[0].toFixed(5)}</td>
+                <td>{offset.rotation[0].toFixed(5)}</td>
+                <td>{offset.rotation[1].toFixed(5)}</td>
+                <td>{offset.rotation[2].toFixed(5)}</td>
               </tr>
             )}
           </tbody>
