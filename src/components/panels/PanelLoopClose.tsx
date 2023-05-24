@@ -32,7 +32,7 @@ import { useLoopClose } from '@/zustand/useLoopClose'
 import DISC from '@/assets/images/disc.png'
 import { ipcRenderer } from 'electron'
 import { useProject } from '@/zustand/useProject'
-import { apsFullMsg } from '../../../proto/aps_msgs'
+import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { shallow } from 'zustand/shallow'
 import fs from 'fs'
 
@@ -160,9 +160,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   const [offset, setOffset] = useState<{
     position: [number, number, number]
+    orientation: [number, number, number, number]
     rotation: [number, number, number]
   }>({
     position: [0, 0, 0],
+    orientation: [0, 0, 0, 1],
     rotation: [0, 0, 0]
   })
 
@@ -181,6 +183,79 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   const handleGridChange = (v: boolean) => {
     gridRef.current!.visible = v
+  }
+
+  const handleMatch = () => {
+    const msg = apsFullMsg
+      .encode({
+        topicName: '/aps/loop/manual/match/set',
+        topicType: 0,
+        loopManualMatchParam: {
+          dataDir: project!.path,
+          amapName: project!.amap,
+          edge: {
+            curScanId: Number(currentFrame?.id),
+            curScanTime: Number(currentFrame?.timestamp),
+            refScanId: Number(referenceFrame?.id),
+            refScanTime: Number(referenceFrame?.timestamp),
+            initMatchPq: {
+              position: {
+                x: offset.position[0],
+                y: offset.position[1],
+                z: offset.position[2]
+              },
+              orientation: {
+                x: offset.orientation[0],
+                y: offset.orientation[1],
+                z: offset.orientation[2],
+                w: offset.orientation[3]
+              }
+            }
+          },
+          processReturn: {
+            status: 0,
+            msg: ''
+          }
+        }
+      })
+      .finish()
+
+    ipcRenderer.invoke('loop-match-set', JSON.stringify(apsFullMsg.decode(msg)))
+
+    ipcRenderer.on('loop-match-set-reply', (event, arg) => {
+      const msg = apsFullMsg.decode(arg)
+      if (msg.topicName === '/aps/loop/manual/match/ack') {
+        if (msg.loopManualMatchParam) {
+          const { orientation, position } = msg.loopManualMatchParam.edge
+            ?.initMatchPq as Pose
+          if (!orientation || !position) return
+          const orientationQue = new THREE.Quaternion().fromArray([
+            orientation.x,
+            orientation.y,
+            orientation.z,
+            orientation.w
+          ])
+          const rotationEluer = new THREE.Euler().setFromQuaternion(
+            orientationQue
+          )
+          // euler to degree
+          const rotationDeg = rotationEluer
+            .toArray()
+            .map((v: any) => (v * 180) / Math.PI)
+
+          setOffset({
+            position: [position.x, position.y, position.z],
+            orientation: orientationQue.toArray() as [
+              number,
+              number,
+              number,
+              number
+            ],
+            rotation: rotationDeg as [number, number, number]
+          })
+        }
+      }
+    })
   }
 
   useEffect(() => {
@@ -306,10 +381,17 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             }
             axes={true}
             onChange={(position, orientation) => {
-              const euler = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().fromArray(orientation))
+              const euler = new THREE.Euler().setFromQuaternion(
+                new THREE.Quaternion().fromArray(orientation)
+              )
+              // euler to degree
+              const rotation = euler
+                .toArray()
+                .map((v: any) => (v * 180) / Math.PI)
               setOffset({
                 position: position as [number, number, number],
-                rotation: euler.toArray() as [number, number, number]
+                orientation: orientation,
+                rotation: rotation as [number, number, number]
               })
             }}
           />
@@ -402,7 +484,9 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         </Table>
 
         <Group position="right">
-          <Button size="xs">配准</Button>
+          <Button size="xs" onClick={handleMatch}>
+            配准
+          </Button>
           <Button size="xs">保存</Button>
         </Group>
 
