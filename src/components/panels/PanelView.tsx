@@ -286,6 +286,9 @@ export default function PanelView({
             point.orientation[0]
           )
         )
+        var angles = new THREE.Vector3()
+          .fromArray(euler.toArray() as [number, number, number])
+          .multiplyScalar(THREE.MathUtils.RAD2DEG)
         sphere.userData = {
           id: point.id,
           timestamp: point.timestamp,
