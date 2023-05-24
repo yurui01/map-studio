@@ -71,6 +71,7 @@ interface PointCloudMeshProps {
     position: [number, number, number],
     rotation: [number, number, number, number]
   ) => void
+  matrix?: THREE.Matrix4
 }
 
 const PointCloudMesh = ({
@@ -79,7 +80,8 @@ const PointCloudMesh = ({
   origin = [0, 0, 0],
   orientation,
   axes,
-  onChange
+  onChange,
+  matrix
 }: PointCloudMeshProps) => {
   const sprite = useTexture(DISC)
 
@@ -107,6 +109,7 @@ const PointCloudMesh = ({
     return (
       <group position={[-origin[0], -origin[1], -origin[2]]}>
         <PivotControls
+          matrix={matrix}
           offset={origin}
           scale={3}
           rotation={
@@ -167,6 +170,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   })
 
   const [scrolled, setScrolled] = useState(false)
+  const [matrix, setMatrix] = useState<THREE.Matrix4 | undefined>(undefined)
 
   const project = useProject((state) => state.project)
   const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame } =
@@ -211,35 +215,39 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       )
 
       ipcRenderer.on('loop-select-set-reply', (event, arg) => {
-        const currentLASFile = fs.readFileSync(`${project!.path}/cur_frame.las`)
-        const currentFrameLASBlob = new Blob([currentLASFile])
-        // load blob with loaders.gl
-        load(currentFrameLASBlob, LASLoader, { worker: false }).then(
-          (data: any) => {
-            const { header, attributes } = data
-            const { POSITION, COLOR_0 } = attributes
-            setCurrentFrame({
-              ...currentFrame,
-              pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
-            })
-          }
-        )
+        setTimeout(() => {
+          const currentLASFile = fs.readFileSync(
+            `${project!.path}/cur_frame.las`
+          )
+          const currentFrameLASBlob = new Blob([currentLASFile])
+          // load blob with loaders.gl
+          load(currentFrameLASBlob, LASLoader, { worker: false }).then(
+            (data: any) => {
+              const { header, attributes } = data
+              const { POSITION, COLOR_0 } = attributes
+              setCurrentFrame({
+                ...currentFrame,
+                pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
+              })
+            }
+          )
 
-        const referenceLASFile = fs.readFileSync(
-          `${project!.path}/ref_frame.las`
-        )
-        const referenceFrameLASBlob = new Blob([referenceLASFile])
-        // load blob with loaders.gl
-        load(referenceFrameLASBlob, LASLoader, { worker: false }).then(
-          (data: any) => {
-            const { header, attributes } = data
-            const { POSITION, COLOR_0 } = attributes
-            setReferenceFrame({
-              ...referenceFrame,
-              pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
-            })
-          }
-        )
+          const referenceLASFile = fs.readFileSync(
+            `${project!.path}/ref_frame.las`
+          )
+          const referenceFrameLASBlob = new Blob([referenceLASFile])
+          // load blob with loaders.gl
+          load(referenceFrameLASBlob, LASLoader, { worker: false }).then(
+            (data: any) => {
+              const { header, attributes } = data
+              const { POSITION, COLOR_0 } = attributes
+              setReferenceFrame({
+                ...referenceFrame,
+                pointcloud: { positions: POSITION.value, colors: COLOR_0.value }
+              })
+            }
+          )
+        }, 2000)
       })
     }
   }, [currentFrame?.id && referenceFrame?.id])
@@ -306,12 +314,18 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             }
             axes={true}
             onChange={(position, orientation) => {
-              const euler = new THREE.Euler().setFromQuaternion(new THREE.Quaternion().fromArray(orientation))
+              const euler = new THREE.Euler().setFromQuaternion(
+                new THREE.Quaternion().fromArray(orientation)
+              )
+              const angles = euler
+                .toArray()
+                .map((v: any) => v * (180 / Math.PI))
               setOffset({
                 position: position as [number, number, number],
-                rotation: euler.toArray() as [number, number, number]
+                rotation: angles as [number, number, number]
               })
             }}
+            matrix={matrix}
           />
           <PointCloudMesh
             positions={referenceFrame?.pointcloud?.positions}
@@ -392,7 +406,6 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{offset.position[0].toFixed(5)}</td>
                 <td>{offset.position[1].toFixed(5)}</td>
                 <td>{offset.position[2].toFixed(5)}</td>
-                <td>{offset.rotation[0].toFixed(5)}</td>
                 <td>{offset.rotation[0].toFixed(5)}</td>
                 <td>{offset.rotation[1].toFixed(5)}</td>
                 <td>{offset.rotation[2].toFixed(5)}</td>

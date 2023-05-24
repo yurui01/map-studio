@@ -299,9 +299,9 @@ export default function PanelView({
           qx: point.orientation[1],
           qy: point.orientation[2],
           qz: point.orientation[3],
-          rx: euler.x,
-          ry: euler.y,
-          rz: euler.z
+          rx: angles.x,
+          ry: angles.y,
+          rz: angles.z
         } as IFrame
         points.add(sphere)
       }
