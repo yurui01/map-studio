@@ -38,6 +38,7 @@
     "react-accessible-treeview": "^2.5.4",
     "three": "^0.152.2",
     "ts-proto": "^1.147.3",
+    "ts-protoc-gen": "^0.15.0",
     "zustand": "^4.3.8"
   },
   "devDependencies": {
