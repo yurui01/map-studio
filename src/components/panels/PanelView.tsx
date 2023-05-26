@@ -156,7 +156,7 @@ export default function PanelView({
     viewer.setEDLEnabled(true)
     viewer.setFOV(60)
     viewer.setPointBudget(5 * 1000 * 1000)
-    viewer.setControls(viewer.orbitControls)
+    viewer.setControls(viewer.earthControls)
     viewer.renderer.antialias = false
     viewer.renderer.setPixelRatio(window.devicePixelRatio)
 
