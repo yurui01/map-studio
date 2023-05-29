@@ -189,11 +189,18 @@ ipcMain.handle('convert-project', async (event, payload) => {
 ipcMain.handle('loop-select-set', async (event, payload) => {
   if (!win || !cpp) return
   console.log(payload)
-  cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
+  cpp.stdin.write(`${payload}\n`)
 
   cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
     try {
-      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      // const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      // if (msg.topicName === '/aps/loop/manual/select/ack') {
+      //   win?.webContents.send('loop-select-set-reply', msg)
+      //   cpp!.stdout.removeAllListeners('data')
+      // }
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
       if (msg.topicName === '/aps/loop/manual/select/ack') {
         win?.webContents.send('loop-select-set-reply', msg)
         cpp!.stdout.removeAllListeners('data')
@@ -201,5 +208,26 @@ ipcMain.handle('loop-select-set', async (event, payload) => {
     } catch (err) {
 
     }
+  })
+})
+
+ipcMain.handle('loop-match-set', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+      if (msg.topicName === '/aps/loop/manual/match/ack') {
+        win?.webContents.send('loop-match-set-reply', msg)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    } catch (err) {
+      console.log(err)
+    }
+
   })
 })

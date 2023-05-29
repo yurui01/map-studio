@@ -270,7 +270,12 @@ export default function PanelView({
       const points = new THREE.Object3D()
 
       for (let point of footprint) {
-        const geometry = new THREE.SphereGeometry(0.1, 32, 32)
+        let geometry = null
+        if (point.id === '119' || point.id === '1042') {
+          geometry = new THREE.SphereGeometry(0.3, 32, 32)
+        } else {
+          geometry = new THREE.SphereGeometry(0.1, 32, 32)
+        }
         const material = new THREE.MeshBasicMaterial({ color: '#ff0000' })
         const sphere = new THREE.Mesh(geometry, material)
         sphere.position.set(
