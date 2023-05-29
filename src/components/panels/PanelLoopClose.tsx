@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, ThreeElements, useFrame } from '@react-three/fiber'
 import {
   Box,
   CloseButton,
@@ -19,7 +19,8 @@ import {
   GizmoViewport,
   PivotControls,
   Points,
-  useTexture
+  useTexture,
+  OrthographicCamera
 } from '@react-three/drei'
 import { load } from '@loaders.gl/core'
 import { LASLoader } from '@loaders.gl/las'
@@ -35,6 +36,26 @@ import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { shallow } from 'zustand/shallow'
 import fs from 'fs'
+
+function BoxMesh(props: ThreeElements['mesh']) {
+  const ref = useRef<THREE.Mesh>(null!)
+  const [hovered, hover] = useState(false)
+  const [clicked, click] = useState(false)
+
+  return (
+    <mesh
+      {...props}
+      ref={ref}
+      scale={clicked ? 1.5 : 1}
+      onClick={(event) => click(!clicked)}
+      onPointerOver={(event) => hover(true)}
+      onPointerOut={(event) => hover(false)}
+    >
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
+    </mesh>
+  )
+}
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -89,29 +110,42 @@ const PointCloudMesh = ({
     // console.log(e.elements)
     const matrix = new THREE.Matrix4().fromArray(e.elements)
     const position = new THREE.Vector3().setFromMatrixPosition(matrix)
-    let rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
-    let originVe = new THREE.Vector3()
-      .fromArray([-origin[0], -origin[1], -origin[2]])
-      .applyQuaternion(rotation)
-    // console.log(origin, originVe)
-    const position1 = position
-      .sub(originVe)
-      .sub(new THREE.Vector3().fromArray(origin))
-    console.log(position1.toArray(), rotation.toArray())
+    const rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
+    // console.log('source: ', position.toArray(), rotation.toArray())
+    // let originVe = new THREE.Vector3()
+    //   .fromArray([-origin[0], -origin[1], -origin[2]])
+    //   .applyQuaternion(rotation)
+    // // console.log(origin, originVe)
+    // const position1 = position
+    //   .sub(originVe)
+    //   .sub(new THREE.Vector3().fromArray(origin))
+    console.log('matrix: ', position.toArray(), rotation.toArray())
     onChange &&
       onChange(
-        position1.toArray() as [number, number, number],
+        position.toArray() as [number, number, number],
         rotation.toArray() as [number, number, number, number]
       )
   }
 
   if (axes) {
     return (
-      <group position={[-origin[0], -origin[1], -origin[2]]}>
+      <group>
         <PivotControls
           matrix={matrix}
+          // matrix={new THREE.Matrix4()
+          //   .makeRotationFromEuler(
+          //     new THREE.Euler().setFromQuaternion(
+          //       new THREE.Quaternion(
+          //         0.020686360226382164,
+          //         0.008025483845431593,
+          //         0.000166058935361268,
+          //         0.9997537889570917
+          //       )
+          //     )
+          //   )
+          //   .setPosition(-2.372009923888525, 0.750842524040064, -0.5830624897542969)}
           offset={origin}
-          scale={3}
+          // scale={3}
           rotation={
             orientation &&
             (new THREE.Euler()
@@ -120,7 +154,10 @@ const PointCloudMesh = ({
           }
           onDrag={handleCurrentFrameDrag}
         >
-          <Points positions={positions}>
+          <Points
+            positions={positions}
+            // position={origin && [-origin[0], -origin[1], -origin[2]]}
+          >
             <pointsMaterial
               size={3}
               map={sprite}
@@ -138,7 +175,7 @@ const PointCloudMesh = ({
     return (
       <Points
         positions={positions}
-        position={[-origin[0], -origin[1], -origin[2]]}
+        // position={[-origin[0], -origin[1], -origin[2]]}
       >
         <pointsMaterial
           size={3}
@@ -169,6 +206,10 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     position: [0, 0, 0],
     orientation: [0, 0, 0, 1],
     rotation: [0, 0, 0]
+  })
+
+  const [initFrame, setInitFrame] = useState<any>({
+    positions: new Float32Array()
   })
 
   const [scrolled, setScrolled] = useState(false)
@@ -227,10 +268,9 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     ipcRenderer.invoke('loop-match-set', JSON.stringify(apsFullMsg.decode(msg)))
 
     ipcRenderer.on('loop-match-set-reply', (event, arg) => {
-      const msg = apsFullMsg.decode(arg)
-      if (msg.topicName === '/aps/loop/manual/match/ack') {
-        if (msg.loopManualMatchParam) {
-          const { orientation, position } = msg.loopManualMatchParam.edge
+      if (arg.topicName === '/aps/loop/manual/match/ack') {
+        if (arg.loopManualMatchParam) {
+          const { orientation, position } = arg.loopManualMatchParam.edge
             ?.initMatchPq as Pose
           if (!orientation || !position) return
           const orientationQue = new THREE.Quaternion().fromArray([
@@ -257,6 +297,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             ],
             rotation: rotationDeg as [number, number, number]
           })
+          console.log(rotationDeg, position)
+          setMatrix(
+            new THREE.Matrix4()
+              .makeRotationFromEuler(rotationEluer)
+              .setPosition(position.x, position.y, position.z)
+          )
         }
       }
     })
@@ -322,6 +368,19 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               })
             }
           )
+
+          const initFile = fs.readFileSync(`${project!.path}/init_frame.txt`)
+          const initData = initFile.toString().split('\n')
+          let initArr: any[] = []
+          for (let line of initData) {
+            const lineData = line.split(',')
+            initArr.push(lineData[0])
+            initArr.push(lineData[1])
+            initArr.push(lineData[2])
+          }
+          setInitFrame({
+            positions: new Float32Array(initArr)
+          })
         }, 2000)
       })
     }
@@ -361,10 +420,19 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         })}
       >
         <Canvas
-          camera={{ up: [0, 0, 1], far: 10000, position: [10, 10, 10] }}
+          // camera={{ up: [0, 0, 1], far: 10000, position: [10, 10, 10] }}
           gl={{ antialias: false }}
           dpr={Math.max(window.devicePixelRatio, 2)}
         >
+          <BoxMesh position={[0, 0, 0]} />
+          <OrthographicCamera
+            makeDefault
+            position={[10, 10, 10]}
+            up={[0, 0, 1]}
+            far={10000}
+            zoom={1}
+            near={0.1}
+          />
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
           <gridHelper
@@ -381,7 +449,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           </GizmoHelper>
           <PointCloudMesh
             positions={currentFrame?.pointcloud?.positions}
-            color="blue"
+            color="yellow"
             origin={
               currentFrame
                 ? [currentFrame.px, currentFrame.py, currentFrame.pz]
@@ -406,7 +474,17 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           />
           <PointCloudMesh
             positions={referenceFrame?.pointcloud?.positions}
-            color="red"
+            color="white"
+            origin={
+              referenceFrame
+                ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
+                : [0, 0, 0]
+            }
+            axes={false}
+          />
+          <PointCloudMesh
+            positions={initFrame.positions}
+            color="green"
             origin={
               referenceFrame
                 ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
@@ -496,6 +574,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             配准
           </Button>
           <Button size="xs">保存</Button>
+          <Button size="xs">重置</Button>
         </Group>
 
         <ScrollArea onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
