@@ -11,7 +11,8 @@ import {
   Badge,
   Group,
   Button,
-  ScrollArea
+  ScrollArea,
+  ActionIcon
 } from '@mantine/core'
 import {
   OrbitControls,
@@ -20,7 +21,8 @@ import {
   PivotControls,
   Points,
   useTexture,
-  OrthographicCamera
+  OrthographicCamera,
+  CameraControls
 } from '@react-three/drei'
 import { load } from '@loaders.gl/core'
 import { LASLoader } from '@loaders.gl/las'
@@ -36,26 +38,7 @@ import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { shallow } from 'zustand/shallow'
 import fs from 'fs'
-
-function BoxMesh(props: ThreeElements['mesh']) {
-  const ref = useRef<THREE.Mesh>(null!)
-  const [hovered, hover] = useState(false)
-  const [clicked, click] = useState(false)
-
-  return (
-    <mesh
-      {...props}
-      ref={ref}
-      scale={clicked ? 1.5 : 1}
-      onClick={(event) => click(!clicked)}
-      onPointerOver={(event) => hover(true)}
-      onPointerOut={(event) => hover(false)}
-    >
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={hovered ? 'hotpink' : 'orange'} />
-    </mesh>
-  )
-}
+import { IconReset, Iconify } from '@/assets/icons'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -107,19 +90,10 @@ const PointCloudMesh = ({
   const sprite = useTexture(DISC)
 
   const handleCurrentFrameDrag = (e: any) => {
-    // console.log(e.elements)
     const matrix = new THREE.Matrix4().fromArray(e.elements)
     const position = new THREE.Vector3().setFromMatrixPosition(matrix)
     const rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
-    // console.log('source: ', position.toArray(), rotation.toArray())
-    // let originVe = new THREE.Vector3()
-    //   .fromArray([-origin[0], -origin[1], -origin[2]])
-    //   .applyQuaternion(rotation)
-    // // console.log(origin, originVe)
-    // const position1 = position
-    //   .sub(originVe)
-    //   .sub(new THREE.Vector3().fromArray(origin))
-    console.log('matrix: ', position.toArray(), rotation.toArray())
+
     onChange &&
       onChange(
         position.toArray() as [number, number, number],
@@ -132,20 +106,7 @@ const PointCloudMesh = ({
       <group>
         <PivotControls
           matrix={matrix}
-          // matrix={new THREE.Matrix4()
-          //   .makeRotationFromEuler(
-          //     new THREE.Euler().setFromQuaternion(
-          //       new THREE.Quaternion(
-          //         0.020686360226382164,
-          //         0.008025483845431593,
-          //         0.000166058935361268,
-          //         0.9997537889570917
-          //       )
-          //     )
-          //   )
-          //   .setPosition(-2.372009923888525, 0.750842524040064, -0.5830624897542969)}
           offset={origin}
-          // scale={3}
           rotation={
             orientation &&
             (new THREE.Euler()
@@ -173,15 +134,11 @@ const PointCloudMesh = ({
     )
   } else {
     return (
-      <Points
-        positions={positions}
-        // position={[-origin[0], -origin[1], -origin[2]]}
-      >
+      <Points positions={positions}>
         <pointsMaterial
           size={3}
           map={sprite}
           alphaTest={0.9}
-          // vertexColors
           color={color}
           transparent
           sizeAttenuation={false}
@@ -198,6 +155,8 @@ interface PanelLoopCloseProps {
 export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   const { classes, cx } = useStyles()
 
+  const cameraControlsRef = useRef<CameraControls | null>(null)
+
   const [offset, setOffset] = useState<{
     position: [number, number, number]
     orientation: [number, number, number, number]
@@ -207,11 +166,10 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     orientation: [0, 0, 0, 1],
     rotation: [0, 0, 0]
   })
-
   const [initFrame, setInitFrame] = useState<any>({
     positions: new Float32Array()
   })
-
+  const [edges, setEdges] = useState<number[][]>([])
   const [scrolled, setScrolled] = useState(false)
   const [matrix, setMatrix] = useState<THREE.Matrix4 | undefined>(undefined)
 
@@ -297,7 +255,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             ],
             rotation: rotationDeg as [number, number, number]
           })
-          console.log(rotationDeg, position)
+
           setMatrix(
             new THREE.Matrix4()
               .makeRotationFromEuler(rotationEluer)
@@ -306,6 +264,34 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         }
       }
     })
+  }
+
+  const handleSaveEdge = () => {
+    if (matrix) {
+      const rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
+      const position = new THREE.Vector3().setFromMatrixPosition(matrix)
+      const line = [
+        currentFrame!.id,
+        referenceFrame!.id,
+        position.x,
+        position.y,
+        position.z,
+        rotation.w,
+        rotation.x,
+        rotation.y,
+        rotation.z
+      ]
+      if (fs.existsSync(`${project!.path}/loops.txt`)) {
+        fs.appendFileSync(`${project!.path}/loops.txt`, line.toString() + '\n')
+      } else {
+        fs.writeFileSync(`${project!.path}/loops.txt`, line.toString() + '\n')
+      }
+    }
+  }
+
+  const handleResetEdge = () => {
+    setMatrix(undefined)
+    useLoopClose.setState({ currentFrame: null, referenceFrame: null })
   }
 
   useEffect(() => {
@@ -386,12 +372,65 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     }
   }, [currentFrame?.id && referenceFrame?.id])
 
-  useEffect(() => {
-    return () => {
-      // clear frames
-      useLoopClose.setState({ currentFrame: null, referenceFrame: null })
+  const handleViewChange = (v: number) => {
+    switch (v) {
+      case 0:
+        cameraControlsRef.current?.rotateTo(
+          90 * THREE.MathUtils.DEG2RAD,
+          90 * THREE.MathUtils.DEG2RAD,
+          true
+        )
+        break
+      case 1:
+        cameraControlsRef.current?.rotateTo(
+          -90 * THREE.MathUtils.DEG2RAD,
+          90 * THREE.MathUtils.DEG2RAD,
+          true
+        )
+        break
+      case 2:
+        cameraControlsRef.current?.rotateTo(
+          0 * THREE.MathUtils.DEG2RAD,
+          0 * THREE.MathUtils.DEG2RAD,
+          true
+        )
+        break
+      case 3:
+        cameraControlsRef.current?.rotateTo(
+          0 * THREE.MathUtils.DEG2RAD,
+          180 * THREE.MathUtils.DEG2RAD,
+          true
+        )
+        break
+      case 4:
+        cameraControlsRef.current?.rotateTo(
+          0 * THREE.MathUtils.DEG2RAD,
+          90 * THREE.MathUtils.DEG2RAD,
+          true
+        )
+        break
+      case 5:
+        cameraControlsRef.current?.rotateTo(
+          180 * THREE.MathUtils.DEG2RAD,
+          90 * THREE.MathUtils.DEG2RAD,
+          true
+        )
     }
-  }, [])
+  }
+
+  useEffect(() => {
+    // if loops.txt exist then load
+    if (!project) return
+
+    if (fs.existsSync(`${project!.path}/loops.txt`)) {
+      const loopsData = fs.readFileSync(`${project!.path}/loops.txt`)
+      const lines = loopsData.toString().split('\n')
+      for (let line of lines) {
+        const lineData = line.split(',').map((v) => Number(v))
+        setEdges((prev) => [...prev, lineData])
+      }
+    }
+  }, [project])
 
   return (
     <Box
@@ -412,7 +451,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         }}
         onClick={onClose}
       />
-      <Toolbar onGridChange={handleGridChange} control={false} />
+      <Toolbar
+        onGridChange={handleGridChange}
+        control={false}
+        onViewChange={handleViewChange}
+      />
       <Box
         sx={(theme) => ({
           height: '50%',
@@ -420,29 +463,32 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         })}
       >
         <Canvas
-          // camera={{ up: [0, 0, 1], far: 10000, position: [10, 10, 10] }}
           gl={{ antialias: false }}
           dpr={Math.max(window.devicePixelRatio, 2)}
         >
-          <BoxMesh position={[0, 0, 0]} />
           <OrthographicCamera
             makeDefault
-            position={[10, 10, 10]}
+            position={[0, 0, 1000]}
             up={[0, 0, 1]}
-            far={10000}
-            zoom={1}
-            near={0.1}
+            zoom={50}
+            // top={200}
+            // bottom={-200}
+            // left={200}
+            // right={-200}
+            near={1}
+            far={2000}
           />
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
           <gridHelper
             ref={gridRef}
-            args={[1000, 100, '#ffffff', '#ffffff']}
+            args={[50, 50, '#ffffff', '#ffffff']}
             rotation={[Math.PI / 2, 0, 0]}
             material={gridHelperMaterial}
           />
           <GizmoHelper alignment="bottom-right" margin={[80, 80]}>
             <GizmoViewport
+              disabled
               axisColors={['#9d4b4b', '#2f7f4f', '#3b5b9d']}
               labelColor="white"
             />
@@ -499,21 +545,27 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             panSpeed={0.5}
             rotateSpeed={0.5}
           />
+          <CameraControls
+            makeDefault
+            dollySpeed={0.05}
+            ref={cameraControlsRef}
+          />
         </Canvas>
       </Box>
 
       <Stack justify="space-between" p={24}>
-        <Table>
+        <Table fontSize={'xs'} withBorder withColumnBorders>
           <thead className={cx(classes.header)}>
             <tr>
               <th>帧</th>
               <th>ID</th>
-              <th>px</th>
-              <th>py</th>
-              <th>pz</th>
-              <th>rx</th>
-              <th>ry</th>
-              <th>rz</th>
+              <th>PX</th>
+              <th>PY</th>
+              <th>PZ</th>
+              <th>RX</th>
+              <th>RY</th>
+              <th>RZ</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -531,6 +583,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{currentFrame.rx!.toFixed(5)}</td>
                 <td>{currentFrame.ry!.toFixed(5)}</td>
                 <td>{currentFrame.rz!.toFixed(5)}</td>
+                <td />
               </tr>
             )}
             {referenceFrame && (
@@ -547,6 +600,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{referenceFrame.rx!.toFixed(5)}</td>
                 <td>{referenceFrame.ry!.toFixed(5)}</td>
                 <td>{referenceFrame.rz!.toFixed(5)}</td>
+                <td />
               </tr>
             )}
 
@@ -564,17 +618,26 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{offset.rotation[0].toFixed(5)}</td>
                 <td>{offset.rotation[1].toFixed(5)}</td>
                 <td>{offset.rotation[2].toFixed(5)}</td>
+                <td>
+                  <ActionIcon size="xs">
+                    <Iconify icon={IconReset} width={14} />
+                  </ActionIcon>
+                </td>
               </tr>
             )}
           </tbody>
         </Table>
 
         <Group position="right">
-          <Button size="xs" onClick={handleMatch}>
+          <Button size="xs" color="blue.9" onClick={handleMatch}>
             配准
           </Button>
-          <Button size="xs">保存</Button>
-          <Button size="xs">重置</Button>
+          <Button size="xs" color="green.9" onClick={handleSaveEdge}>
+            保存
+          </Button>
+          <Button size="xs" color="gray" onClick={handleResetEdge}>
+            重置
+          </Button>
         </Group>
 
         <ScrollArea onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
@@ -608,8 +671,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         </ScrollArea>
 
         <Group h={100} position="right">
-          <Button size="xs">优化</Button>
-          <Button size="xs">取消</Button>
+          <Button size="xs" color="green.9">
+            优化
+          </Button>
+          <Button size="xs" color="red.9">
+            取消
+          </Button>
         </Group>
       </Stack>
     </Box>

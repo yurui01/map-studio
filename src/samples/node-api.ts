@@ -114,6 +114,9 @@ export const openProject = (path?: string) => {
 
       // set project
       useProject.getState().setProject(project)
+
+      // add history
+      ipcRenderer.invoke('add-history', result)
     }
   })
 }

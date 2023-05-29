@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { update } from './update'
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
 import { MessageType, apsFullMsg } from '../../proto/aps_msgs'
-import { useProject } from '../../src/zustand/useProject'
+import fs from 'fs'
 
 // The built directory structure
 //
@@ -231,3 +231,40 @@ ipcMain.handle('loop-match-set', async (event, payload) => {
 
   })
 })
+
+ipcMain.handle("add-history", async (event, payload) => {
+  try {
+    if (fs.existsSync(`${app.getPath("userData")}/history.txt`)) {
+      // append if payload is not in history content
+      const historyContent = fs.readFileSync(
+        `${app.getPath("userData")}/history.txt`,
+        "utf-8"
+      );
+      if (!historyContent.includes(payload)) {
+        fs.appendFileSync(
+          `${app.getPath("userData")}/history.txt`,
+          `${payload}\n`
+        );
+      }
+    } else {
+      fs.writeFileSync(
+        `${app.getPath("userData")}/history.txt`,
+        `${payload}\n`
+      );
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+ipcMain.handle("get-history", async (event, payload) => {
+  if (fs.existsSync(`${app.getPath("userData")}/history.txt`)) {
+    const historyContent = fs.readFileSync(
+      `${app.getPath("userData")}/history.txt`,
+      "utf-8"
+    );
+    return historyContent;
+  } else {
+    return "";
+  }
+});

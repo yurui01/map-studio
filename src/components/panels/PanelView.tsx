@@ -44,6 +44,8 @@ export default function PanelView({
     tube: THREE.Mesh
   }>()
 
+  const { currentFrame, referenceFrame } = useLoopClose((state) => state)
+
   const { size, shape, pointSizeType, activeAttributeName, gradient, color } =
     useControls({
       total: {
@@ -239,6 +241,7 @@ export default function PanelView({
           }
         }
 
+
         if (!useLoopClose.getState().referenceFrame) {
           // update the picking ray with the camera and mouse position
           raycaster.setFromCamera(mouse, viewer.scene.getActiveCamera())
@@ -250,6 +253,9 @@ export default function PanelView({
 
           if (intersects.length > 0) {
             const point = intersects[0].object
+            if (useLoopClose.getState().currentFrame!.id === point.userData.id) {
+              return
+            }
             // set blue color
             // @ts-ignore
             point.material.color.setHex('0x376df6')
@@ -266,16 +272,22 @@ export default function PanelView({
   }, [raycaster])
 
   useEffect(() => {
+    if (!footprintRef.current) return
+
+    if (!currentFrame && !referenceFrame) {
+      footprintRef.current.points.children.forEach((point: any) => {
+        // @ts-ignore
+        point.material.color.setHex('0xff0000')
+      })
+    }
+  }, [currentFrame, referenceFrame])
+
+  useEffect(() => {
     if (footprint && footprint.length > 0) {
       const points = new THREE.Object3D()
 
       for (let point of footprint) {
-        let geometry = null
-        if (point.id === '119' || point.id === '1042') {
-          geometry = new THREE.SphereGeometry(0.3, 32, 32)
-        } else {
-          geometry = new THREE.SphereGeometry(0.1, 32, 32)
-        }
+        let geometry = new THREE.SphereGeometry(0.2, 32, 32)
         const material = new THREE.MeshBasicMaterial({ color: '#ff0000' })
         const sphere = new THREE.Mesh(geometry, material)
         sphere.position.set(

@@ -1,6 +1,7 @@
 import { Box, Container } from '@mantine/core'
 import { useDisclosure, useToggle } from '@mantine/hooks'
 import { Allotment } from 'allotment'
+import fs from 'fs'
 
 // components
 import { Menubar, Statusbar } from './components'
@@ -24,6 +25,10 @@ import { useEffect } from 'react'
 import { ipcRenderer } from 'electron'
 import { apsFullMsg } from 'proto/aps_msgs'
 import { openProject } from './samples/node-api'
+import { useHistory } from './zustand/useHistory'
+
+// types
+import { IHistory } from './types/history'
 
 function App() {
   const [openedWelcome, welcomeHandler] = useDisclosure(true)
@@ -38,7 +43,7 @@ function App() {
   // zustand
   const project = useProject((state) => state.project)
   const { isLoading, setLoading } = useProject((state) => state)
-
+  const { historys, addHistory } = useHistory((state) => state)
 
   useEffect(() => {
     ipcRenderer.on('convert-project-reply', (event, payload) => {
@@ -47,6 +52,31 @@ function App() {
         openProject(payload)
         setLoading(false)
       }
+    })
+
+    // get history projects
+    ipcRenderer.invoke('get-history').then((res) => {
+      // read res by line
+      const lines = res.split('\n')
+      lines.forEach((line: string) => {
+        if (!fs.existsSync(`${line}/potree/octree.bin`)) return
+        const potreeStat = fs.statSync(`${line}/potree/octree.bin`)
+
+        const potreeSize =
+          potreeStat.size > 1e9
+            ? `${(potreeStat.size / 1e9).toFixed(2)}GB`
+            : `${(potreeStat.size / 1e6).toFixed(2)}MB`
+        const potreeDate = potreeStat.mtime.toLocaleDateString()
+
+        const name = line.split('/').pop() || ''
+
+        addHistory({
+          name: name,
+          path: line,
+          size: potreeSize,
+          createdAt: potreeDate
+        })
+      })
     })
   }, [])
 

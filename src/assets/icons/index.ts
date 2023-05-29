@@ -26,6 +26,7 @@ import IconPathArrow from '@iconify/icons-iconoir/path-arrow'
 import IconImage from '@iconify/icons-iconoir/media-image'
 import IconEye from '@iconify/icons-iconoir/eye-alt'
 import IconEyeClose from '@iconify/icons-iconoir/eye-close'
+import IconReset from '@iconify/icons-iconoir/refresh'
 
 export {
   Iconify,
@@ -52,5 +53,6 @@ export {
   IconPathArrow,
   IconImage,
   IconEye,
-  IconEyeClose
+  IconEyeClose,
+  IconReset
 }
