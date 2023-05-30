@@ -437,11 +437,17 @@ export default function PanelView({
           refPoint.position,
           curPoint.position
         ])
-        const points = curve.getPoints(50)
-        const geometry = new THREE.BufferGeometry().setFromPoints(points)
-        const material = new THREE.LineBasicMaterial({ color: 0x0000ff })
-        const curveObject = new THREE.Line(geometry, material)
-        viewer.scene.scene.add(curveObject)
+
+        const tubeGeometry = new THREE.TubeGeometry(
+          curve,
+          2,
+          0.01,
+          8,
+          false
+        )
+        const tubeMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff })
+        const tube = new THREE.Mesh(tubeGeometry, tubeMaterial)
+        viewer.scene.scene.add(tube)
 
 
       }
