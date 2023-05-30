@@ -298,6 +298,10 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     }
   }
 
+  const handleResetMatrix = () => {
+    setMatrix(new THREE.Matrix4())
+  }
+
   const handleResetEdge = () => {
     setMatrix(new THREE.Matrix4())
     setSelected(false)
@@ -634,7 +638,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{offset.rotation[1].toFixed(5)}</td>
                 <td>{offset.rotation[2].toFixed(5)}</td>
                 <td>
-                  <ActionIcon size="xs">
+                  <ActionIcon size="xs" onClick={handleResetMatrix}>
                     <Iconify icon={IconReset} width={14} />
                   </ActionIcon>
                 </td>

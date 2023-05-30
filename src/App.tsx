@@ -59,6 +59,8 @@ function App() {
       // read res by line
       const lines = res.split('\n')
       lines.forEach((line: string) => {
+        if (line.length < 3) return
+        
         if (!fs.existsSync(`${line}/potree/octree.bin`)) return
         const potreeStat = fs.statSync(`${line}/potree/octree.bin`)
 

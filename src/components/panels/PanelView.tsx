@@ -9,6 +9,8 @@ import { IPose } from '@/types/project'
 import { useLoopClose } from '@/zustand/useLoopClose'
 
 import { IFrame } from '@/types/frame'
+import fs from 'fs'
+import { useProject } from '@/zustand/useProject'
 
 declare global {
   interface Window {
@@ -36,6 +38,8 @@ export default function PanelView({
   pointCloudVisible = false,
   footprintVisible = false
 }: PanelViewProps) {
+  const project = useProject((state) => state.project)
+
   const axesRef = useRef<THREE.AxesHelper | null>(null)
   const gridRef = useRef<THREE.GridHelper | null>(null)
   const pointCloudRef = useRef<any>(null)
@@ -242,7 +246,6 @@ export default function PanelView({
           }
         }
 
-
         if (!useLoopClose.getState().referenceFrame) {
           console.log(useLoopClose.getState().referenceFrame)
           // update the picking ray with the camera and mouse position
@@ -255,7 +258,9 @@ export default function PanelView({
 
           if (intersects.length > 0) {
             const point = intersects[0].object
-            if (useLoopClose.getState().currentFrame!.id === point.userData.id) {
+            if (
+              useLoopClose.getState().currentFrame!.id === point.userData.id
+            ) {
               return
             }
             // set blue color
@@ -351,6 +356,11 @@ export default function PanelView({
         points,
         tube
       }
+      setTimeout(() => {
+        const img = viewer.renderer.domElement.toDataURL('image/png', 1.0)
+        const imgData = img.replace(/^data:image\/png;base64,/, '')
+        fs.writeFileSync(`${project?.path}/screenshot.png`, imgData, 'base64')
+      }, 2000)
     }
   }, [footprint])
 
@@ -405,6 +415,38 @@ export default function PanelView({
       footprintRef.current.tube.visible = footprintVisible
     }
   }, [footprintVisible])
+
+  useEffect(() => {
+    if (fs.existsSync(`${project?.path}/loops.txt`)) {
+      const loopsData = fs.readFileSync(`${project?.path}/loops.txt`, 'utf-8')
+      const lines = loopsData.split('\n')
+      for (const line of lines) {
+        const edge = line.split(',')
+        const refID = edge[0]
+        const curID = edge[1]
+        const refPoint = footprintRef.current?.points.children.find(
+          (point: any) => point.userData.id === refID
+        )
+        const curPoint = footprintRef.current?.points.children.find(
+          (point: any) => point.userData.id === curID
+        )
+        if (!refPoint || !curPoint) continue
+
+        // create a tube from curPoint to refPoint
+        const curve = new THREE.CatmullRomCurve3([
+          refPoint.position,
+          curPoint.position
+        ])
+        const points = curve.getPoints(50)
+        const geometry = new THREE.BufferGeometry().setFromPoints(points)
+        const material = new THREE.LineBasicMaterial({ color: 0x0000ff })
+        const curveObject = new THREE.Line(geometry, material)
+        viewer.scene.scene.add(curveObject)
+
+
+      }
+    }
+  }, [project])
 
   return (
     <>

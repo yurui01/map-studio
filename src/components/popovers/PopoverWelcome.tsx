@@ -166,7 +166,7 @@ export default function PopoverWelcome({
                       <Button
                         variant="subtle"
                         size="xs"
-                        leftIcon={<Iconify icon={IconFolderOpen} />}
+                        leftIcon={<Iconify icon={IconFolderOpen} width={16} />}
                         onClick={() => {
                           openProject(item.path)
                           onClose()

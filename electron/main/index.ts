@@ -64,6 +64,7 @@ async function createWindow() {
   })
 
   win.maximize()
+  win.removeMenu()
 
   if (url) {
     // electron-vite-vue#298
