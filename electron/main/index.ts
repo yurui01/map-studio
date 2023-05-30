@@ -288,6 +288,39 @@ ipcMain.handle('loop-optimize', async (event, payload) => {
     } catch (err) {
       console.log(err)
     }
+  })
+})
 
+ipcMain.handle('save-project', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+    } catch (err) {
+      console.log(err)
+    }
+  })
+})
+
+ipcMain.handle('export-project', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+    } catch (err) {
+      console.log(err)
+    }
   })
 })

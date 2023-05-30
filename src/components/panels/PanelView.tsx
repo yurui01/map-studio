@@ -49,7 +49,6 @@ export default function PanelView({
   }>()
 
   const { currentFrame, referenceFrame } = useLoopClose((state) => state)
-  const [pointTotal, setPointTotal] = useState(0)
 
   const [controls, set] = useControls(() => ({
     total: {
@@ -59,23 +58,28 @@ export default function PanelView({
     },
     edlEnabled: {
       label: 'EDL',
-      value: true
-
+      value: true,
     },
     edlStrength: {
       label: 'EDL强度',
-      value: 1,
-      render: (get) => get('edlEnabled'),
+      value: 0.4,
+      min: 0,
+      max: 5,
+      render: (get) => get('edlEnabled')
     },
     edlRadius: {
       label: 'EDL半径',
-      value: 1,
-      render: (get) => get('edlEnabled'),
+      value: 1.4,
+      max: 4.0,
+      min: 1.0,
+      render: (get) => get('edlEnabled')
     },
     edlOpacity: {
       label: 'EDL透明度',
       value: 1,
-      render: (get) => get('edlEnabled'),
+      max: 1,
+      min: 0,
+      render: (get) => get('edlEnabled')
     },
     size: {
       label: '点大小',
@@ -131,8 +135,19 @@ export default function PanelView({
     }
   }))
 
-  const { size, shape, pointSizeType, activeAttributeName, gradient, color } =
-    controls
+  const {
+    edlEnabled,
+    edlOpacity,
+    edlRadius,
+    edlStrength,
+    size,
+    shape,
+    pointSizeType,
+    activeAttributeName,
+    gradient,
+    color
+  } = controls
+
   const handleAxesChange = (v: boolean) => {
     axesRef.current!.visible = v
   }
@@ -439,6 +454,22 @@ export default function PanelView({
   }, [footprintVisible])
 
   useEffect(() => {
+    viewer.setEDLEnabled(edlEnabled)
+  }, [edlEnabled])
+
+  useEffect(() => {
+    viewer.setEDLOpacity(edlOpacity)
+  }, [edlOpacity])
+
+  useEffect(() => {
+    viewer.setEDLRadius(edlRadius)
+  }, [edlRadius])
+
+  useEffect(() => {
+    viewer.setEDLStrength(edlStrength)
+  }, [edlStrength])
+
+  useEffect(() => {
     if (fs.existsSync(`${project?.path}/loops.txt`)) {
       const loopsData = fs.readFileSync(`${project?.path}/loops.txt`, 'utf-8')
       const lines = loopsData.split('\n')
@@ -473,7 +504,6 @@ export default function PanelView({
         'utf-8'
       )
       const metadataJSON = JSON.parse(metadata)
-      console.log(metadataJSON  )
       set({ total: metadataJSON.points })
     }
   }, [project])
