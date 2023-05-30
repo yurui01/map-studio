@@ -175,8 +175,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   const [selected, setSelected] = useState<Boolean>(false)
 
   const project = useProject((state) => state.project)
-  const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame, reset } =
-    useLoopClose((state) => state)
+
+  const currentFrame = useLoopClose(state => state.currentFrame)
+  const referenceFrame = useLoopClose(state => state.referenceFrame)
+  const setCurrentFrame = useLoopClose(state => state.setCurrentFrame)
+  const setReferenceFrame = useLoopClose(state => state.setReferenceFrame)
+  const reset = useLoopClose(state => state.reset)
 
   const gridRef = useRef<THREE.GridHelper | null>(null)
   const gridHelperMaterial = new THREE.MeshBasicMaterial({
