@@ -12,7 +12,8 @@ import {
   Group,
   Button,
   ScrollArea,
-  ActionIcon
+  ActionIcon,
+  Center
 } from '@mantine/core'
 import {
   OrbitControls,
@@ -43,7 +44,8 @@ import { IconDelete, IconReset, Iconify } from '@/assets/icons'
 const useStyles = createStyles((theme) => ({
   header: {
     position: 'sticky',
-    top: 0,
+    zIndex: 100,
+    top: -1,
     backgroundColor:
       theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.white,
     transition: 'box-shadow 150ms ease',
@@ -176,11 +178,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
   const project = useProject((state) => state.project)
 
-  const currentFrame = useLoopClose(state => state.currentFrame)
-  const referenceFrame = useLoopClose(state => state.referenceFrame)
-  const setCurrentFrame = useLoopClose(state => state.setCurrentFrame)
-  const setReferenceFrame = useLoopClose(state => state.setReferenceFrame)
-  const reset = useLoopClose(state => state.reset)
+  const currentFrame = useLoopClose((state) => state.currentFrame)
+  const referenceFrame = useLoopClose((state) => state.referenceFrame)
+  const setCurrentFrame = useLoopClose((state) => state.setCurrentFrame)
+  const setReferenceFrame = useLoopClose((state) => state.setReferenceFrame)
+  const reset = useLoopClose((state) => state.reset)
 
   const gridRef = useRef<THREE.GridHelper | null>(null)
   const gridHelperMaterial = new THREE.MeshBasicMaterial({
@@ -304,11 +306,20 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
     reset()
   }
 
-  useEffect(() => {
-    console.log(currentFrame, referenceFrame)
+  const handleOptimize = () => {
+    const msg = {
+      topicName: '/aps/loop/manual/optimize/set',
+      topicType: 0,
+      loopManualOptimizeParam: {
+        dataDir: project!.path,
+        amapName: project!.amap
+      }
+    }
+    ipcRenderer.invoke('loop-optimize', JSON.stringify(msg))
+  }
 
+  useEffect(() => {
     if (currentFrame?.id && referenceFrame?.id) {
-      console.log('selected')
       // invoke select-set
       const msg = apsFullMsg
         .encode({
@@ -509,7 +520,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               labelColor="white"
             />
           </GizmoHelper>
-          {/* {selected && (
+          {selected && (
             <>
               <PointCloudMesh
                 positions={
@@ -550,7 +561,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 axes={false}
               />
             </>
-          )} */}
+          )}
 
           {/* <OrbitControls
             makeDefault
@@ -568,8 +579,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         </Canvas>
       </Box>
 
-      <Stack justify="space-between" p={24}>
-        <Table fontSize={'xs'} withBorder withColumnBorders>
+      <Stack justify="space-between" p={12}>
+        <Table fontSize={'xs'} withBorder withColumnBorders mih={140}>
           <thead className={cx(classes.header)}>
             <tr>
               <th>帧</th>
@@ -634,9 +645,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <td>{offset.rotation[1].toFixed(5)}</td>
                 <td>{offset.rotation[2].toFixed(5)}</td>
                 <td>
-                  <ActionIcon size="xs">
-                    <Iconify icon={IconReset} width={14} />
-                  </ActionIcon>
+                  <Center>
+                    <ActionIcon size="xs">
+                      <Iconify icon={IconReset} width={14} />
+                    </ActionIcon>
+                  </Center>
                 </td>
               </tr>
             )}
@@ -655,8 +668,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           </Button>
         </Group>
 
-        <ScrollArea onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
+        <ScrollArea
+          h={180}
+          onScrollPositionChange={({ y }) => setScrolled(y !== 0)}
+        >
           <Table
+            mah={200}
             withBorder
             withColumnBorders
             fontSize={'xs'}
@@ -697,9 +714,11 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                   <td>{edge[7]}</td>
                   <td>{edge[8]}</td>
                   <td>
-                    <ActionIcon size="xs">
-                      <Iconify icon={IconDelete} width={14} />
-                    </ActionIcon>
+                    <Center>
+                      <ActionIcon size="xs">
+                        <Iconify icon={IconDelete} width={14} />
+                      </ActionIcon>
+                    </Center>
                   </td>
                 </tr>
               ))}
@@ -707,8 +726,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           </Table>
         </ScrollArea>
 
-        <Group h={100} position="right">
-          <Button size="xs" color="green.9">
+        <Group h={40} position="right">
+          <Button size="xs" color="green.9" onClick={handleOptimize}>
             优化
           </Button>
           <Button size="xs" color="red.9">
