@@ -269,3 +269,25 @@ ipcMain.handle("get-history", async (event, payload) => {
     return "";
   }
 });
+
+ipcMain.handle('loop-optimize', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+      if (msg.topicName === '/aps/loop/manual/optimize/ack') {
+        win?.webContents.send('loop-optimize-reply', msg)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    } catch (err) {
+      console.log(err)
+    }
+
+  })
+})

@@ -3,7 +3,7 @@
  */
 {
   appId: 'com.allymeta.mapstudio',
-  asar: true,
+  asar: false,
   directories: {
     output: 'release/${version}'
   },
