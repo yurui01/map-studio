@@ -221,6 +221,7 @@ export default function PanelView({
 
       const onMouseClick = (event: MouseEvent) => {
         if (!useLoopClose.getState().currentFrame) {
+          console.log(useLoopClose.getState().currentFrame)
           // update the picking ray with the camera and mouse position
           raycaster.setFromCamera(mouse, viewer.scene.getActiveCamera())
 
@@ -243,6 +244,7 @@ export default function PanelView({
 
 
         if (!useLoopClose.getState().referenceFrame) {
+          console.log(useLoopClose.getState().referenceFrame)
           // update the picking ray with the camera and mouse position
           raycaster.setFromCamera(mouse, viewer.scene.getActiveCamera())
 
@@ -262,6 +264,7 @@ export default function PanelView({
 
             // set current frame
             useLoopClose.getState().setReferenceFrame(point.userData as IFrame)
+            console.log('set ref frame')
             return
           }
         }

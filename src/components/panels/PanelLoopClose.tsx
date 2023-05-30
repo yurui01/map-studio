@@ -38,7 +38,7 @@ import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { shallow } from 'zustand/shallow'
 import fs from 'fs'
-import { IconReset, Iconify } from '@/assets/icons'
+import { IconDelete, IconReset, Iconify } from '@/assets/icons'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -100,7 +100,7 @@ const PointCloudMesh = ({
         rotation.toArray() as [number, number, number, number]
       )
   }
-
+  console.log(111)
   if (axes) {
     return (
       <group>
@@ -171,11 +171,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   })
   const [edges, setEdges] = useState<number[][]>([])
   const [scrolled, setScrolled] = useState(false)
-  const [matrix, setMatrix] = useState<THREE.Matrix4 | undefined>(undefined)
+  const [matrix, setMatrix] = useState<THREE.Matrix4>()
+  const [selected, setSelected] = useState<Boolean>(false)
 
   const project = useProject((state) => state.project)
-  const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame } =
-    useLoopClose((state) => state, shallow)
+  const { currentFrame, referenceFrame, setCurrentFrame, setReferenceFrame, reset } =
+    useLoopClose((state) => state)
 
   const gridRef = useRef<THREE.GridHelper | null>(null)
   const gridHelperMaterial = new THREE.MeshBasicMaterial({
@@ -267,12 +268,13 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   }
 
   const handleSaveEdge = () => {
+    console.log(matrix)
     if (matrix) {
       const rotation = new THREE.Quaternion().setFromRotationMatrix(matrix)
       const position = new THREE.Vector3().setFromMatrixPosition(matrix)
-      const line = [
-        currentFrame!.id,
-        referenceFrame!.id,
+      let line: number[] = [
+        Number(referenceFrame!.id),
+        Number(currentFrame!.id),
         position.x,
         position.y,
         position.z,
@@ -281,21 +283,28 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
         rotation.y,
         rotation.z
       ]
+      line = line.map((v) => Number(v.toFixed(5)))
       if (fs.existsSync(`${project!.path}/loops.txt`)) {
         fs.appendFileSync(`${project!.path}/loops.txt`, line.toString() + '\n')
       } else {
         fs.writeFileSync(`${project!.path}/loops.txt`, line.toString() + '\n')
       }
+
+      setEdges([...edges, line])
     }
   }
 
   const handleResetEdge = () => {
-    setMatrix(undefined)
-    useLoopClose.setState({ currentFrame: null, referenceFrame: null })
+    setMatrix(new THREE.Matrix4())
+    setSelected(false)
+    reset()
   }
 
   useEffect(() => {
-    if (currentFrame && referenceFrame) {
+    console.log(currentFrame, referenceFrame)
+
+    if (currentFrame?.id && referenceFrame?.id) {
+      console.log('selected')
       // invoke select-set
       const msg = apsFullMsg
         .encode({
@@ -367,6 +376,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           setInitFrame({
             positions: new Float32Array(initArr)
           })
+
+          setSelected(true)
         }, 2000)
       })
     }
@@ -427,6 +438,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       const lines = loopsData.toString().split('\n')
       for (let line of lines) {
         const lineData = line.split(',').map((v) => Number(v))
+        if (lineData.length < 6) continue
         setEdges((prev) => [...prev, lineData])
       }
     }
@@ -493,62 +505,61 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               labelColor="white"
             />
           </GizmoHelper>
-          <PointCloudMesh
-            positions={currentFrame?.pointcloud?.positions}
-            color="yellow"
-            origin={
-              currentFrame
-                ? [currentFrame.px, currentFrame.py, currentFrame.pz]
-                : [0, 0, 0]
-            }
-            axes={true}
-            onChange={(position, orientation) => {
-              const euler = new THREE.Euler().setFromQuaternion(
-                new THREE.Quaternion().fromArray(orientation)
-              )
-              // euler to degree
-              const rotation = euler
-                .toArray()
-                .map((v: any) => (v * 180) / Math.PI)
-              setOffset({
-                position: position as [number, number, number],
-                orientation: orientation,
-                rotation: rotation as [number, number, number]
-              })
-            }}
-            matrix={matrix}
-          />
-          <PointCloudMesh
-            positions={referenceFrame?.pointcloud?.positions}
-            color="white"
-            origin={
-              referenceFrame
-                ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
-                : [0, 0, 0]
-            }
-            axes={false}
-          />
-          <PointCloudMesh
-            positions={initFrame.positions}
-            color="green"
-            origin={
-              referenceFrame
-                ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
-                : [0, 0, 0]
-            }
-            axes={false}
-          />
-          <OrbitControls
+          {/* {selected && (
+            <>
+              <PointCloudMesh
+                positions={
+                  currentFrame?.pointcloud &&
+                  currentFrame?.pointcloud?.positions
+                }
+                color="yellow"
+                origin={
+                  currentFrame
+                    ? [currentFrame.px, currentFrame.py, currentFrame.pz]
+                    : [0, 0, 0]
+                }
+                axes={true}
+                onChange={(position, orientation) => {
+                  const euler = new THREE.Euler().setFromQuaternion(
+                    new THREE.Quaternion().fromArray(orientation)
+                  )
+                  // euler to degree
+                  const rotation = euler
+                    .toArray()
+                    .map((v: any) => (v * 180) / Math.PI)
+                  setOffset({
+                    position: position as [number, number, number],
+                    orientation: orientation,
+                    rotation: rotation as [number, number, number]
+                  })
+                }}
+                matrix={matrix}
+              />
+              <PointCloudMesh
+                positions={referenceFrame?.pointcloud?.positions}
+                color="white"
+                origin={
+                  referenceFrame
+                    ? [referenceFrame.px, referenceFrame.py, referenceFrame.pz]
+                    : [0, 0, 0]
+                }
+                axes={false}
+              />
+            </>
+          )} */}
+
+          {/* <OrbitControls
             makeDefault
             minDistance={0}
             enableDamping={false}
-            panSpeed={0.5}
-            rotateSpeed={0.5}
-          />
+            // panSpeed={0.5}
+            // rotateSpeed={0.5}
+          /> */}
           <CameraControls
             makeDefault
-            dollySpeed={0.05}
+            dollySpeed={0.5}
             ref={cameraControlsRef}
+            dampingFactor={0}
           />
         </Canvas>
       </Box>
@@ -642,6 +653,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
 
         <ScrollArea onScrollPositionChange={({ y }) => setScrolled(y !== 0)}>
           <Table
+            withBorder
+            withColumnBorders
             fontSize={'xs'}
             sx={(theme) => ({
               borderRadius: 4,
@@ -655,18 +668,38 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
               className={cx(classes.header, { [classes.scrolled]: scrolled })}
             >
               <tr>
-                <th>边</th>
-                <th>置信度</th>
-                <th>px</th>
-                <th>py</th>
-                <th>pz</th>
-                <th>qx</th>
-                <th>qy</th>
-                <th>qz</th>
-                <th>qw</th>
+                <th>参考帧</th>
+                <th>当前帧</th>
+                <th>PX</th>
+                <th>PY</th>
+                <th>PZ</th>
+                <th>QW</th>
+                <th>QX</th>
+                <th>QY</th>
+                <th>QZ</th>
                 <th></th>
               </tr>
             </thead>
+            <tbody>
+              {edges.map((edge, index) => (
+                <tr key={index}>
+                  <td>{edge[0]}</td>
+                  <td>{edge[1]}</td>
+                  <td>{edge[2]}</td>
+                  <td>{edge[3]}</td>
+                  <td>{edge[4]}</td>
+                  <td>{edge[5]}</td>
+                  <td>{edge[6]}</td>
+                  <td>{edge[7]}</td>
+                  <td>{edge[8]}</td>
+                  <td>
+                    <ActionIcon size="xs">
+                      <Iconify icon={IconDelete} width={14} />
+                    </ActionIcon>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
           </Table>
         </ScrollArea>
 
