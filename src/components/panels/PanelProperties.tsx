@@ -23,6 +23,15 @@ export default function PanelProperties() {
           }}
           fill
           theme={{
+            radii: {
+              xs: '4px',
+              sm: '4px',
+              lg: '4px'
+            },
+            colors: {
+              // elevation1: '#1A1B1E',
+              elevation2: '#141517'
+            },
             shadows: {
               level1: undefined,
               level2: undefined

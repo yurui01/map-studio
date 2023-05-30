@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { Canvas, ThreeElements, useFrame } from '@react-three/fiber'
+import { Canvas } from '@react-three/fiber'
 import {
   Box,
   CloseButton,
@@ -16,7 +16,6 @@ import {
   Center
 } from '@mantine/core'
 import {
-  OrbitControls,
   GizmoHelper,
   GizmoViewport,
   PivotControls,
@@ -27,6 +26,7 @@ import {
 } from '@react-three/drei'
 import { load } from '@loaders.gl/core'
 import { LASLoader } from '@loaders.gl/las'
+import fs from 'fs'
 
 // components
 import Toolbar from '../toolbar/Toolbar'
@@ -37,8 +37,6 @@ import DISC from '@/assets/images/disc.png'
 import { ipcRenderer } from 'electron'
 import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
-import { shallow } from 'zustand/shallow'
-import fs from 'fs'
 import { IconDelete, IconReset, Iconify } from '@/assets/icons'
 
 const useStyles = createStyles((theme) => ({
@@ -485,6 +483,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       <Toolbar
         onGridChange={handleGridChange}
         control={false}
+        camera={false}
         onViewChange={handleViewChange}
       />
       <Box
@@ -677,6 +676,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           onScrollPositionChange={({ y }) => setScrolled(y !== 0)}
         >
           <Table
+            highlightOnHover
             mah={200}
             withBorder
             withColumnBorders

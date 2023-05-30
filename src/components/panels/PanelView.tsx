@@ -50,66 +50,103 @@ export default function PanelView({
 
   const { currentFrame, referenceFrame } = useLoopClose((state) => state)
 
-  const { size, shape, pointSizeType, activeAttributeName, gradient, color } =
-    useControls({
-      total: {
-        label: '点总数',
-        value: Number(281112324).toLocaleString(),
-        editable: false
-      },
-      size: {
-        label: '点大小',
-        value: 1,
-        min: 0.1,
-        max: 3
-      },
-      shape: {
-        label: '点形状',
-        value: 0,
-        options: {
-          矩形: 0,
-          圆形: 1
-        }
-      },
-      pointSizeType: {
-        label: '尺寸类型',
-        value: 0,
-        options: {
-          固定: 0,
-          自适应: 2
-        }
-      },
-      activeAttributeName: {
-        label: '颜色类型',
-        value: 'rgba',
-        options: {
-          RGB: 'rgba',
-          高程: 'elevation',
-          自定义: 'color'
-        }
-      },
-      gradient: {
-        label: '渐变预设',
-        value: 0,
-        options: {
-          SPECTRAL: 0,
-          PLASMA: 1,
-          YELLOW_GREEN: 2,
-          VIRIDIS: 3,
-          INFERNO: 4,
-          GRAYSCALE: 5,
-          TURBO: 6,
-          RAINBOW: 7,
-          CONTOUR: 8
-        },
-        render: (get) => get('activeAttributeName') === 'elevation'
-      },
-      color: {
-        label: '自定义颜色',
-        value: '#ffffff',
-        render: (get) => get('activeAttributeName') === 'color'
+  const [controls, set] = useControls(() => ({
+    total: {
+      label: '点总数',
+      value: 0,
+      disabled: true
+    },
+    edlEnabled: {
+      label: 'EDL',
+      value: true,
+    },
+    edlStrength: {
+      label: 'EDL强度',
+      value: 0.4,
+      min: 0,
+      max: 5,
+      render: (get) => get('edlEnabled')
+    },
+    edlRadius: {
+      label: 'EDL半径',
+      value: 1.4,
+      max: 4.0,
+      min: 1.0,
+      render: (get) => get('edlEnabled')
+    },
+    edlOpacity: {
+      label: 'EDL透明度',
+      value: 1,
+      max: 1,
+      min: 0,
+      render: (get) => get('edlEnabled')
+    },
+    size: {
+      label: '点大小',
+      value: 1,
+      min: 0.1,
+      max: 3
+    },
+    shape: {
+      label: '点形状',
+      value: 0,
+      options: {
+        矩形: 0,
+        圆形: 1
       }
-    })
+    },
+    pointSizeType: {
+      label: '尺寸类型',
+      value: 0,
+      options: {
+        固定: 0,
+        自适应: 2
+      }
+    },
+    activeAttributeName: {
+      label: '颜色类型',
+      value: 'rgba',
+      options: {
+        RGB: 'rgba',
+        高程: 'elevation',
+        自定义: 'color'
+      }
+    },
+    gradient: {
+      label: '渐变预设',
+      value: 0,
+      options: {
+        SPECTRAL: 0,
+        PLASMA: 1,
+        YELLOW_GREEN: 2,
+        VIRIDIS: 3,
+        INFERNO: 4,
+        GRAYSCALE: 5,
+        TURBO: 6,
+        RAINBOW: 7,
+        CONTOUR: 8
+      },
+      render: (get) => get('activeAttributeName') === 'elevation'
+    },
+    color: {
+      label: '自定义颜色',
+      value: '#ffffff',
+      render: (get) => get('activeAttributeName') === 'color'
+    }
+  }))
+
+  const {
+    edlEnabled,
+    edlOpacity,
+    edlRadius,
+    edlStrength,
+    size,
+    shape,
+    pointSizeType,
+    activeAttributeName,
+    gradient,
+    color
+  } = controls
 
   const handleAxesChange = (v: boolean) => {
     axesRef.current!.visible = v
@@ -417,6 +454,22 @@ export default function PanelView({
   }, [footprintVisible])
 
   useEffect(() => {
+    viewer.setEDLEnabled(edlEnabled)
+  }, [edlEnabled])
+
+  useEffect(() => {
+    viewer.setEDLOpacity(edlOpacity)
+  }, [edlOpacity])
+
+  useEffect(() => {
+    viewer.setEDLRadius(edlRadius)
+  }, [edlRadius])
+
+  useEffect(() => {
+    viewer.setEDLStrength(edlStrength)
+  }, [edlStrength])
+
+  useEffect(() => {
     if (fs.existsSync(`${project?.path}/loops.txt`)) {
       const loopsData = fs.readFileSync(`${project?.path}/loops.txt`, 'utf-8')
       const lines = loopsData.split('\n')
@@ -451,6 +504,15 @@ export default function PanelView({
 
 
       }
+    }
+
+    if (fs.existsSync(`${project?.path}/potree/metadata.json`)) {
+      const metadata = fs.readFileSync(
+        `${project?.path}/potree/metadata.json`,
+        'utf-8'
+      )
+      const metadataJSON = JSON.parse(metadata)
+      set({ total: metadataJSON.points })
     }
   }, [project])
 
