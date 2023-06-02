@@ -105,7 +105,7 @@ export default function PanelView({
     },
     activeAttributeName: {
       label: '颜色类型',
-      value: 'rgba',
+      value: 'elevation',
       options: {
         RGB: 'rgba',
         高程: 'elevation',
@@ -114,7 +114,7 @@ export default function PanelView({
     },
     gradient: {
       label: '渐变预设',
-      value: 0,
+      value: 7,
       options: {
         SPECTRAL: 0,
         PLASMA: 1,
@@ -229,7 +229,11 @@ export default function PanelView({
           let { pointcloud } = e
           viewer.scene.addPointCloud(pointcloud)
           viewer.fitToScreen()
+          const gradientNames = Object.keys(Potree.Gradients)
+          let gradientName = gradientNames[gradient]
+          let gradientValue = Potree.Gradients[gradientName]
           pointcloud.material.activeAttributeName = 'elevation'
+          pointcloud.material.gradient = gradientValue
           pointcloud.material.size = 1
           pointcloud.material.shape = 0
           pointcloud.material.miniSize = 0

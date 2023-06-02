@@ -38,6 +38,7 @@ import { ipcRenderer } from 'electron'
 import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { IconDelete, IconReset, Iconify } from '@/assets/icons'
+import { notifications } from '@mantine/notifications'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -295,6 +296,12 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       }
 
       setEdges([...edges, line])
+
+      notifications.show({
+        title: '成功',
+        message: '保存成功',
+        color: 'green',
+      })
     }
   }
 
@@ -314,7 +321,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       topicType: 0,
       loopManualOptimizeParam: {
         dataDir: project!.path,
-        amapName: project!.amap
+        amapName: project!.amap,
+        edgeName: 'loops.txt',
       }
     }
     ipcRenderer.invoke('loop-optimize', JSON.stringify(msg))
@@ -381,18 +389,18 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
             }
           )
 
-          const initFile = fs.readFileSync(`${project!.path}/init_frame.txt`)
-          const initData = initFile.toString().split('\n')
-          let initArr: any[] = []
-          for (let line of initData) {
-            const lineData = line.split(',')
-            initArr.push(lineData[0])
-            initArr.push(lineData[1])
-            initArr.push(lineData[2])
-          }
-          setInitFrame({
-            positions: new Float32Array(initArr)
-          })
+          // const initFile = fs.readFileSync(`${project!.path}/init_frame.txt`)
+          // const initData = initFile.toString().split('\n')
+          // let initArr: any[] = []
+          // for (let line of initData) {
+          //   const lineData = line.split(',')
+          //   initArr.push(lineData[0])
+          //   initArr.push(lineData[1])
+          //   initArr.push(lineData[2])
+          // }
+          // setInitFrame({
+          //   positions: new Float32Array(initArr)
+          // })
 
           setSelected(true)
         }, 2000)
@@ -702,7 +710,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                 <th>QX</th>
                 <th>QY</th>
                 <th>QZ</th>
-                <th></th>
+                {/* <th></th> */}
               </tr>
             </thead>
             <tbody>
@@ -717,13 +725,13 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
                   <td>{edge[6]}</td>
                   <td>{edge[7]}</td>
                   <td>{edge[8]}</td>
-                  <td>
+                  {/* <td>
                     <Center>
                       <ActionIcon size="xs">
                         <Iconify icon={IconDelete} width={14} />
                       </ActionIcon>
                     </Center>
-                  </td>
+                  </td> */}
                 </tr>
               ))}
             </tbody>

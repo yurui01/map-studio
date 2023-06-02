@@ -50,7 +50,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     }}
   >
     <UbuntuFont />
-    <Notifications />
+    <Notifications maw={200} />
     <App />
   </MantineProvider>
 )

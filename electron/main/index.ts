@@ -64,7 +64,7 @@ async function createWindow() {
   })
 
   win.maximize()
-  win.removeMenu()
+  // win.removeMenu()
 
   if (url) {
     // electron-vite-vue#298
@@ -166,7 +166,7 @@ ipcMain.handle('convert-project', async (event, payload) => {
   cpp.stdout.on('data', (data) => {
     console.log(data.toString())
     try {
-      const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      const msg = JSON.parse(data.toString())
 
       if (msg.processStatus === 'processing') {
         processing = true
