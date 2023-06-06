@@ -36,7 +36,7 @@ export default function PopoverAbout({ opened, onClose }: PopoverAboutProps) {
           </Text>
         </Group>
         <Text fz="xs" color="dark.1">
-          版本：0.1.9-beta.8
+          版本：0.2.0
         </Text>
         <Group mt="auto">
           <Text fz="xs" color="dark.1">

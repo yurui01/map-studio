@@ -23,6 +23,7 @@ import {
   Iconify
 } from '@/assets/icons'
 import { openProject } from '@/samples/node-api';
+import { useProject } from '@/zustand/useProject';
 
 const MenubarStyles = createStyles((theme) => ({
   root: {
@@ -146,8 +147,34 @@ export default function Menubar({
 
   const { toggle, fullscreen } = useFullscreen();
 
+  const project = useProject( state => state.project)
+
   const handleExit = () => {
     ipcRenderer.invoke('app-exit')
+  }
+
+  const handleSaveProject = () => {
+    const msg = {
+      topicName: '/aps/save/set',
+      topicType: 0,
+      saveProjectParam: {
+        dataDir: project?.path,
+        amapName: project?.amap
+      }
+    }
+    ipcRenderer.invoke('save-project', JSON.stringify(msg))
+  }
+
+  const handleExport = () => {
+    const msg = {
+      topicName: '/aps/convert/export/set',
+      topicType: 0,
+      convertExportParam: {
+        dataDir: project?.path,
+        amapName: project?.amap
+      }
+    }
+    ipcRenderer.invoke('export-project', JSON.stringify(msg))
   }
 
   return (
@@ -222,7 +249,7 @@ export default function Menubar({
             </RadixMenubar.Trigger>
             <RadixMenubar.Portal>
               <RadixMenubar.Content className={classes.content}>
-                <RadixMenubar.Item className={classes.item} onClick={openProject}>
+                <RadixMenubar.Item className={classes.item} onClick={() => openProject()}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
                       <Iconify icon={IconFile} width={16} />
@@ -232,7 +259,7 @@ export default function Menubar({
                     </Grid.Col>
                   </Grid>
                 </RadixMenubar.Item>
-                <RadixMenubar.Item className={classes.item}>
+                <RadixMenubar.Item className={classes.item} onClick={handleSaveProject}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
                       <Iconify icon={IconSave} width={16} />
@@ -242,7 +269,7 @@ export default function Menubar({
                     </Grid.Col>
                   </Grid>
                 </RadixMenubar.Item>
-                <RadixMenubar.Item className={classes.item}>
+                <RadixMenubar.Item className={classes.item} onClick={handleExport}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
                       <Iconify icon={IconExport} width={16} />
@@ -285,7 +312,7 @@ export default function Menubar({
                 <RadixMenubar.Item className={classes.item} onClick={toggle}>
                   <Grid align="center" w="100%">
                     <Grid.Col span={2} p={0}>
-                      <Iconify icon={IconFrameCorners} width={16} color='blue' />
+                      <Iconify icon={IconFrameCorners} width={16} />
                     </Grid.Col>
                     <Grid.Col span={8}>
                       <Text fz="xs">切换全屏</Text>

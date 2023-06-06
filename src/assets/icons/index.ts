@@ -14,6 +14,8 @@ import IconExport from '@iconify/icons-ph/export-fill'
 import IconRecycle from '@iconify/icons-ph/recycle'
 import IconFrameCorners from '@iconify/icons-ph/frame-corners'
 import IconCrop from '@iconify/icons-ph/crop-fill'
+import IconNotification from '@iconify/icons-ph/notification-fill'
+import IconDelete from '@iconify/icons-ph/trash-fill'
 
 // iconoir
 import IconAxes from '@iconify/icons-iconoir/axes'
@@ -21,6 +23,11 @@ import IconPerspectiveView from '@iconify/icons-iconoir/perspective-view'
 import IconOrthogonalView from '@iconify/icons-iconoir/orthogonal-view'
 import Icon3DSelectSolid from '@iconify/icons-iconoir/3d-select-solid'
 import Icon3dSelectPoint from '@iconify/icons-iconoir/3d-select-point'
+import IconPathArrow from '@iconify/icons-iconoir/path-arrow'
+import IconImage from '@iconify/icons-iconoir/media-image'
+import IconEye from '@iconify/icons-iconoir/eye-alt'
+import IconEyeClose from '@iconify/icons-iconoir/eye-close'
+import IconReset from '@iconify/icons-iconoir/refresh'
 
 export {
   Iconify,
@@ -42,5 +49,12 @@ export {
   IconExport,
   IconRecycle,
   IconFrameCorners,
-  IconCrop
+  IconCrop,
+  IconNotification,
+  IconPathArrow,
+  IconImage,
+  IconEye,
+  IconEyeClose,
+  IconReset,
+  IconDelete
 }

@@ -7,7 +7,11 @@ import {
   Grid,
   Stack,
   ScrollArea,
-  Button
+  Button,
+  Center,
+  Radio,
+  Group,
+  Checkbox
 } from '@mantine/core'
 
 // components
@@ -15,6 +19,8 @@ import { IconFile, IconFolderOpen, Iconify } from '@/assets/icons'
 
 // assets
 import WelcomeBackdrop from '@/assets/images/welcome.png'
+import { openProject } from '@/samples/node-api'
+import { useHistory } from '@/zustand/useHistory'
 
 interface PopoverWelcomeProps {
   opened: boolean
@@ -25,9 +31,7 @@ export default function PopoverWelcome({
   opened,
   onClose
 }: PopoverWelcomeProps) {
-  const [history, setHistory] = useState<
-    { name: string; date: string; size: string; directory: string }[]
-  >([])
+  const { historys } = useHistory((state) => state)
 
   return (
     <Modal
@@ -74,13 +78,13 @@ export default function PopoverWelcome({
             color: '#fff'
           }}
         >
-          0.1.9-beta.8
+          0.2.0
         </Text>
         <Image src={WelcomeBackdrop} alt="welcome" height={350} />
       </Box>
 
       <Grid mih={400} gutter={0} mt={30}>
-        <Grid.Col span={5} pl={60}>
+        <Grid.Col span={4} pl={60}>
           <Stack>
             <Text fz="xs" ml={20}>
               打开
@@ -101,20 +105,24 @@ export default function PopoverWelcome({
                       : theme.colors.gray[1]
                 }
               })}
+              onClick={() => {
+                openProject()
+                onClose()
+              }}
             >
               打开文件夹
             </Button>
           </Stack>
         </Grid.Col>
-        <Grid.Col span={7}>
-          <Stack>
+        <Grid.Col span={8}>
+          <Stack px={24}>
             <Text fz="xs">最近打开...</Text>
-            <ScrollArea w="100%" h="100%">
-              {history.map((item) => (
+            <ScrollArea type="never" w="100%" h="100%">
+              {historys.map((item) => (
                 <Grid key={item.name}>
                   <Grid.Col span={2}>
                     <Image
-                      src={`file://${item.directory}/screenshot.png`}
+                      src={`file://${item.path}/screenshot.png`}
                       alt="text"
                       width={80}
                       height={80}
@@ -144,7 +152,7 @@ export default function PopoverWelcome({
                       >
                         <Text fz={'xs'}>
                           <span>创建时间：</span>
-                          <span>{item.date}</span>
+                          <span>{item.createdAt}</span>
                         </Text>
                         <Text fz={'xs'}>
                           <span>大小：</span>
@@ -158,8 +166,11 @@ export default function PopoverWelcome({
                       <Button
                         variant="subtle"
                         size="xs"
-                        compact
-                        leftIcon={<Iconify icon={IconFolderOpen} />}
+                        leftIcon={<Iconify icon={IconFolderOpen} width={16} />}
+                        onClick={() => {
+                          openProject(item.path)
+                          onClose()
+                        }}
                       >
                         打开
                       </Button>
@@ -171,6 +182,12 @@ export default function PopoverWelcome({
           </Stack>
         </Grid.Col>
       </Grid>
+      {/* <Center mb={40}>
+        <Group>
+          <Checkbox size="xs" />
+          <Text size="sm">启动时显示欢迎页</Text>
+        </Group>
+      </Center> */}
     </Modal>
   )
 }

@@ -2,6 +2,9 @@ import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron'
 import { release } from 'node:os'
 import { join } from 'node:path'
 import { update } from './update'
+import { spawn, ChildProcessWithoutNullStreams } from 'child_process'
+import { MessageType, apsFullMsg } from '../../proto/aps_msgs'
+import fs from 'fs'
 
 // The built directory structure
 //
@@ -36,6 +39,8 @@ if (!app.requestSingleInstanceLock()) {
 // process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true'
 
 let win: BrowserWindow | null = null
+let cpp: ChildProcessWithoutNullStreams | null = null
+
 // Here, you can also use other preload
 const preload = join(__dirname, '../preload/index.js')
 const url = process.env.VITE_DEV_SERVER_URL
@@ -53,11 +58,13 @@ async function createWindow() {
       // Consider using contextBridge.exposeInMainWorld
       // Read more on https://www.electronjs.org/docs/latest/tutorial/context-isolation
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      webSecurity: false
     }
   })
 
   win.maximize()
+  // win.removeMenu()
 
   if (url) {
     // electron-vite-vue#298
@@ -107,6 +114,12 @@ app.on('activate', () => {
   }
 })
 
+app.on('ready', () => {
+  if (process.platform === 'win32') {
+    cpp = spawn(join(process.env.PUBLIC, 'cpp', 'aps_process_app.exe'))
+  }
+})
+
 // New window example arg: new windows url
 ipcMain.handle('open-win', (_, arg) => {
   const childWindow = new BrowserWindow({
@@ -130,7 +143,7 @@ ipcMain.handle('app-exit', (_, arg) => {
 })
 
 ipcMain.handle('open-project', async (event, payload) => {
-  if (!win) return
+  if (!win || payload) return
 
   const result = await dialog.showOpenDialog(win, {
     properties: ['openDirectory', 'multiSelections']
@@ -141,4 +154,184 @@ ipcMain.handle('open-project', async (event, payload) => {
   const directory = result.filePaths[0]
 
   return directory
+})
+
+ipcMain.handle('convert-project', async (event, payload) => {
+  if (!win || !cpp) return
+
+  cpp.stdin.write(`${payload.replace(/\\/g, '/')}\n`)
+
+  let processing = false
+  let finished = false
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+
+      if (msg.processStatus === 'processing') {
+        processing = true
+      }
+      if (msg.processStatus === 'idle' && processing) {
+        processing = false
+        finished = true
+      }
+      if (finished) {
+        // remove stdout listener
+        win?.webContents.send('convert-project-reply', JSON.parse(payload).convertImportParam.dataDir)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    }
+    catch (err) {
+      // console.log(err)
+    }
+  })
+})
+
+ipcMain.handle('loop-select-set', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      // const msg = apsFullMsg.decode(Buffer.from(data.toString().replace(/(\r)/gm, '')))
+      // if (msg.topicName === '/aps/loop/manual/select/ack') {
+      //   win?.webContents.send('loop-select-set-reply', msg)
+      //   cpp!.stdout.removeAllListeners('data')
+      // }
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+      if (msg.topicName === '/aps/loop/manual/select/ack') {
+        win?.webContents.send('loop-select-set-reply', msg)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    } catch (err) {
+
+    }
+  })
+})
+
+ipcMain.handle('loop-match-set', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+      if (msg.topicName === '/aps/loop/manual/match/ack') {
+        win?.webContents.send('loop-match-set-reply', msg)
+        cpp!.stdout.removeAllListeners('data')
+      }
+    } catch (err) {
+      console.log(err)
+    }
+
+  })
+})
+
+ipcMain.handle("add-history", async (event, payload) => {
+  try {
+    if (fs.existsSync(`${app.getPath("userData")}/history.txt`)) {
+      // append if payload is not in history content
+      const historyContent = fs.readFileSync(
+        `${app.getPath("userData")}/history.txt`,
+        "utf-8"
+      );
+      if (!historyContent.includes(payload)) {
+        fs.appendFileSync(
+          `${app.getPath("userData")}/history.txt`,
+          `${payload}\n`
+        );
+      }
+    } else {
+      fs.writeFileSync(
+        `${app.getPath("userData")}/history.txt`,
+        `${payload}\n`
+      );
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+ipcMain.handle("get-history", async (event, payload) => {
+  if (fs.existsSync(`${app.getPath("userData")}/history.txt`)) {
+    const historyContent = fs.readFileSync(
+      `${app.getPath("userData")}/history.txt`,
+      "utf-8"
+    );
+    return historyContent;
+  } else {
+    return "";
+  }
+});
+
+ipcMain.handle('loop-optimize', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  let processing = false
+  let finished = false
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+
+      if (msg.processStatus === 'processing') {
+        processing = true
+      }
+      if (msg.processStatus === 'idle' && processing) {
+        processing = false
+        finished = true
+      }
+      if (finished) {
+        // remove stdout listener
+        win?.webContents.send('loop-optimize-reply', true)
+        // cpp!.stdout.removeAllListeners('data')
+        finished = false
+      }
+    } catch (err) {
+      console.log(err)
+    }
+  })
+})
+
+ipcMain.handle('save-project', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+    } catch (err) {
+      console.log(err)
+    }
+  })
+})
+
+ipcMain.handle('export-project', async (event, payload) => {
+  if (!win || !cpp) return
+  console.log(payload)
+
+  cpp.stdin.write(`${payload}\n`)
+
+  cpp.stdout.on('data', (data) => {
+    console.log(data.toString())
+    try {
+      const msg = JSON.parse(data.toString())
+      console.log('recive: ', msg)
+    } catch (err) {
+      console.log(err)
+    }
+  })
 })

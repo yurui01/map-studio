@@ -162,7 +162,7 @@ export default function Toolbar({
   const [axesState, setAxesState] = useState<boolean>(axes)
   const [gridState, setGridState] = useState<boolean>(grid)
   const [cameraState, setCameraState] = useState<number>(1)
-  const [controlState, setControlState] = useState<number>(0)
+  const [controlState, setControlState] = useState<number>(1)
 
   const handleAxesChange = () => {
     onAxesChange && onAxesChange(!axesState)
