@@ -6,6 +6,7 @@ interface IProjectState {
   isLoading: boolean
   setLoading: (isLoading: boolean) => void
   setProject: (project: IProject) => void
+  removeProject: () => void
 }
 
 export const useProject = create<IProjectState>((set, get) => ({

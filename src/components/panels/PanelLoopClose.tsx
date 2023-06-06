@@ -39,6 +39,8 @@ import { useProject } from '@/zustand/useProject'
 import { Pose, apsFullMsg } from '../../../proto/aps_msgs'
 import { IconDelete, IconReset, Iconify } from '@/assets/icons'
 import { notifications } from '@mantine/notifications'
+import { openProject } from '@/samples/node-api'
+import { PopoverLoading } from '../popovers'
 
 const useStyles = createStyles((theme) => ({
   header: {
@@ -174,8 +176,10 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
   const [scrolled, setScrolled] = useState(false)
   const [matrix, setMatrix] = useState<THREE.Matrix4>()
   const [selected, setSelected] = useState<Boolean>(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const project = useProject((state) => state.project)
+  const removeProject = useProject((state) => state.removeProject)
 
   const currentFrame = useLoopClose((state) => state.currentFrame)
   const referenceFrame = useLoopClose((state) => state.referenceFrame)
@@ -300,7 +304,7 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       notifications.show({
         title: '成功',
         message: '保存成功',
-        color: 'green',
+        color: 'green'
       })
     }
   }
@@ -322,10 +326,25 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
       loopManualOptimizeParam: {
         dataDir: project!.path,
         amapName: project!.amap,
-        edgeName: 'loops.txt',
+        edgeName: 'loops.txt'
       }
     }
+
+    setIsLoading(true)
     ipcRenderer.invoke('loop-optimize', JSON.stringify(msg))
+
+    ipcRenderer.on('loop-optimize-reply', (event, arg) => {
+      console.log(222222)
+      const temp = new String(project!.path)
+      // dispatch window reload project
+      const e = new Event('reload-project')
+      window.dispatchEvent(e)
+
+      removeProject()
+      console.log(temp.toString())
+      openProject(temp.toString())
+      setIsLoading(false)
+    })
   }
 
   useEffect(() => {
@@ -747,6 +766,8 @@ export default function PanelLoopClose({ onClose }: PanelLoopCloseProps) {
           </Button>
         </Group>
       </Stack>
+
+      <PopoverLoading opened={isLoading} onClose={() => setIsLoading(false)} />
     </Box>
   )
 }

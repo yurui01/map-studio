@@ -10,8 +10,6 @@ import {
   Group,
   Stack
 } from '@mantine/core'
-import { NavigationProgress, nprogress } from '@mantine/nprogress'
-import { useEffect } from 'react'
 
 interface PopoverLoadingProps {
   opened: boolean
@@ -22,13 +20,6 @@ export default function PopoverLoading({
   opened,
   onClose
 }: PopoverLoadingProps) {
-  useEffect(() => {
-    if (opened) {
-      nprogress.start()
-    } else {
-      nprogress.complete()
-    }
-  }, [opened])
 
   return (
     <Modal

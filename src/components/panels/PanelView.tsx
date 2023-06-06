@@ -218,6 +218,12 @@ export default function PanelView({
     viewer.scene.scene.add(gridHelper)
 
     viewer.scene.view.setView([10, 10, 10], [0, 0, 0])
+
+    window.addEventListener('reload-project', () => {
+      console.log('reload-project')
+      const newScene = new Potree.Scene()
+      viewer.setScene(newScene)
+    })
   }, [])
 
   useEffect(() => {

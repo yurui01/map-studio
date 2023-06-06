@@ -276,14 +276,25 @@ ipcMain.handle('loop-optimize', async (event, payload) => {
 
   cpp.stdin.write(`${payload}\n`)
 
+  let processing = false
+  let finished = false
   cpp.stdout.on('data', (data) => {
     console.log(data.toString())
     try {
       const msg = JSON.parse(data.toString())
-      console.log('recive: ', msg)
-      if (msg.topicName === '/aps/loop/manual/optimize/ack') {
-        win?.webContents.send('loop-optimize-reply', msg)
-        cpp!.stdout.removeAllListeners('data')
+
+      if (msg.processStatus === 'processing') {
+        processing = true
+      }
+      if (msg.processStatus === 'idle' && processing) {
+        processing = false
+        finished = true
+      }
+      if (finished) {
+        // remove stdout listener
+        win?.webContents.send('loop-optimize-reply', true)
+        // cpp!.stdout.removeAllListeners('data')
+        finished = false
       }
     } catch (err) {
       console.log(err)
